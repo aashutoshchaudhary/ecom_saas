@@ -388,16 +388,16 @@ services:
       kafka:
         condition: service_healthy
 
-  website-service:
+  website-builder-service:
     <<: *service-defaults
     build:
       context: .
-      dockerfile: services/website-service/Dockerfile
+      dockerfile: services/website-builder-service/Dockerfile
     ports:
       - "3006:3006"
     environment:
       <<: *common-env
-      SERVICE_NAME: website-service
+      SERVICE_NAME: website-builder-service
       PORT: 3006
       DATABASE_URL: postgresql://siteforge:${POSTGRES_PASSWORD:-siteforge-dev}@postgres-website:5432/website_db
     depends_on:
@@ -470,16 +470,16 @@ services:
       kafka:
         condition: service_healthy
 
-  ai-version-service:
+  ai-versioning-service:
     <<: *service-defaults
     build:
       context: .
-      dockerfile: services/ai-version-service/Dockerfile
+      dockerfile: services/ai-versioning-service/Dockerfile
     ports:
       - "3010:3010"
     environment:
       <<: *common-env
-      SERVICE_NAME: ai-version-service
+      SERVICE_NAME: ai-versioning-service
       PORT: 3010
       DATABASE_URL: postgresql://siteforge:${POSTGRES_PASSWORD:-siteforge-dev}@postgres-ai:5432/ai_version_db
     depends_on:
