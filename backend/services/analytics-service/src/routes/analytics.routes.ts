@@ -17,5 +17,4 @@ router.get('/dashboard', validate(getDashboardSchema), analyticsController.getDa
 router.get('/traffic-sources', validate(getTrafficSourcesSchema), analyticsController.getTrafficSources.bind(analyticsController));
 router.get('/top-products', validate(getTopProductsSchema), analyticsController.getTopProducts.bind(analyticsController));
 
-export default router;
 export { router };

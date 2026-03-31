@@ -26,8 +26,6 @@ RUN cd services/api-gateway && npm install --omit=dev
 
 # Copy compiled code
 COPY --from=build /app/services/api-gateway/dist ./services/api-gateway/dist
-COPY --from=build /app/services/api-gateway/prisma ./services/api-gateway/prisma
-COPY --from=build /app/services/api-gateway/node_modules/.prisma ./services/api-gateway/node_modules/.prisma
 
 USER appuser
 WORKDIR /app/services/api-gateway

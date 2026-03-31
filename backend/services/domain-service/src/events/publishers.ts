@@ -1,8 +1,8 @@
-import amqplib, { Channel, Connection } from 'amqplib';
+import amqplib from 'amqplib';
 import { config } from '../config';
 
-let connection: Connection | null = null;
-let channel: Channel | null = null;
+let connection: any = null;
+let channel: any = null;
 const EXCHANGE = 'siteforge.events';
 
 export async function connectRabbitMQ(): Promise<void> {

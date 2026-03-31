@@ -15,4 +15,4 @@ router.get('/', validate(getLogsSchema), auditController.getLogs.bind(auditContr
 router.post('/search', validate(searchLogsSchema), auditController.searchLogs.bind(auditController));
 router.post('/export', validate(exportLogsSchema), auditController.exportLogs.bind(auditController));
 
-export default router;
+export { router };

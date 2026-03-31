@@ -69,7 +69,7 @@ export class MediaService {
         cdnUrl,
         folder,
         alt: data.alt,
-        metadata,
+        metadata: metadata as any,
         uploadedBy: data.uploadedBy,
       },
     });

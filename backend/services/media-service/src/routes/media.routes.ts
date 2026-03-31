@@ -22,4 +22,4 @@ router.get('/:fileId', validate(getFileSchema), mediaController.getFile.bind(med
 router.delete('/:fileId', validate(deleteFileSchema), mediaController.deleteFile.bind(mediaController));
 router.post('/signed-url', validate(getSignedUrlSchema), mediaController.getSignedUrl.bind(mediaController));
 
-export default router;
+export { router };

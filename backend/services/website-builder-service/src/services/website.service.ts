@@ -12,14 +12,14 @@ export class WebsiteService {
     name: string; templateId?: string; industryId?: string;
     structure?: Record<string, unknown>;
   }) {
+    const slug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     const website = await prisma.website.create({
       data: {
         id: generateId(),
         tenantId,
         name: data.name,
-        templateId: data.templateId,
-        industryId: data.industryId,
-        structure: data.structure || { header: {}, footer: {}, pages: [] },
+        slug,
+        structure: (data.structure || { header: {}, footer: {}, pages: [] }) as any,
         status: 'DRAFT',
       },
     });
@@ -123,12 +123,13 @@ export class WebsiteService {
       data: {
         id: generateId(),
         websiteId,
-        name: data.name,
+        title: data.name,
         slug: data.slug,
-        sections: data.sections || [],
+        path: `/${data.slug}`,
+        sections: (data.sections || []) as any,
         isHomepage: data.isHomepage || false,
-        metaTitle: data.metaTitle,
-        metaDescription: data.metaDescription,
+        seoTitle: data.metaTitle,
+        seoDescription: data.metaDescription,
         sortOrder: await this.getNextSortOrder(websiteId),
       },
     });
@@ -164,7 +165,17 @@ export class WebsiteService {
 
     const updated = await prisma.page.update({
       where: { id: pageId },
-      data: { ...data, sections: data.sections as any, updatedAt: new Date() },
+      data: {
+        title: data.name,
+        slug: data.slug,
+        path: data.slug ? `/${data.slug}` : undefined,
+        sections: data.sections as any,
+        isHomepage: data.isHomepage,
+        seoTitle: data.metaTitle,
+        seoDescription: data.metaDescription,
+        sortOrder: data.sortOrder,
+        updatedAt: new Date(),
+      },
     });
 
     await EventProducer.publish(
@@ -205,16 +216,18 @@ export class WebsiteService {
       throw new NotFoundError('Page', pageId);
     }
 
+    const copySlug = `${page.slug}-copy-${Date.now()}`;
     return prisma.page.create({
       data: {
         id: generateId(),
         websiteId,
-        name: `${page.name} (Copy)`,
-        slug: `${page.slug}-copy-${Date.now()}`,
+        title: `${page.title} (Copy)`,
+        slug: copySlug,
+        path: `/${copySlug}`,
         sections: page.sections as any,
         isHomepage: false,
-        metaTitle: page.metaTitle,
-        metaDescription: page.metaDescription,
+        seoTitle: page.seoTitle,
+        seoDescription: page.seoDescription,
         sortOrder: await this.getNextSortOrder(websiteId),
       },
     });

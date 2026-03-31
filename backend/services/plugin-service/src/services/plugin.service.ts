@@ -61,7 +61,7 @@ export class PluginService {
       data: {
         tenantId,
         pluginId,
-        config: config || {},
+        config: (config || {}) as any,
         isEnabled: true,
       },
     });
@@ -102,7 +102,7 @@ export class PluginService {
     const installation = await this.getInstallation(installationId, tenantId);
     return prisma.pluginInstallation.update({
       where: { id: installation.id },
-      data: { config },
+      data: { config: config as any },
     });
   }
 

@@ -60,7 +60,7 @@ export class ProductController {
 
   async bulkUpload(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await productService.bulkUpload(req.headers['x-tenant-id'] as string, req.file as any);
+      const result = await productService.bulkUpload(req.headers['x-tenant-id'] as string, (req as any).file);
       res.json({ success: true, data: result });
     } catch (error) { next(error); }
   }

@@ -3,7 +3,6 @@ import {
   generateId, AppError, NotFoundError, ConflictError,
   parsePagination, paginationHelper,
   RedisClient, RedisKeys,
-  EventProducer, KafkaTopics,
 } from '@siteforge/shared';
 
 const prisma = new PrismaClient();
@@ -14,7 +13,7 @@ export class RoleService {
     const where = { tenantId };
 
     const [roles, total] = await Promise.all([
-      prisma.role.findMany({ where, skip, take: limit, orderBy: { name: 'asc' } }),
+      prisma.role.findMany({ where, skip, take: limit, orderBy: { name: 'asc' }, include: { permissions: { include: { permission: true } } } }),
       prisma.role.count({ where }),
     ]);
 
@@ -33,11 +32,19 @@ export class RoleService {
         tenantId,
         name: data.name,
         description: data.description,
-        permissions: data.permissions || [],
       },
     });
 
-    return role;
+    // Link permissions if provided
+    if (data.permissions?.length) {
+      for (const permId of data.permissions) {
+        await prisma.rolePermission.create({
+          data: { id: generateId(), roleId: role.id, permissionId: permId },
+        }).catch(() => {}); // skip if permission doesn't exist
+      }
+    }
+
+    return this.getRole(tenantId, role.id);
   }
 
   async update(tenantId: string, roleId: string, data: { name?: string; description?: string }) {
@@ -52,85 +59,75 @@ export class RoleService {
 
     return prisma.role.update({
       where: { id: roleId },
-      data: { ...data, updatedAt: new Date() },
+      data: { name: data.name, description: data.description },
+      include: { permissions: { include: { permission: true } } },
     });
   }
 
   async delete(tenantId: string, roleId: string) {
     const role = await this.getRole(tenantId, roleId);
-
     if (role.isSystem) {
       throw new AppError(400, 'SYSTEM_ROLE', 'Cannot delete system roles');
     }
-
+    await prisma.rolePermission.deleteMany({ where: { roleId } });
     await prisma.role.delete({ where: { id: roleId } });
-    await this.invalidatePermissionCache(tenantId);
     return { message: 'Role deleted' };
   }
 
   async getPermissions(tenantId: string, roleId: string) {
-    const role = await this.getRole(tenantId, roleId);
-    return role.permissions;
+    await this.getRole(tenantId, roleId);
+    const rps = await prisma.rolePermission.findMany({
+      where: { roleId },
+      include: { permission: true },
+    });
+    return rps.map(rp => ({ id: rp.permission.id, resource: rp.permission.resource, action: rp.permission.action }));
   }
 
-  async assignPermissions(tenantId: string, roleId: string, permissions: string[]) {
-    const role = await this.getRole(tenantId, roleId);
-    const merged = [...new Set([...(role.permissions as string[]), ...permissions])];
-
-    const updated = await prisma.role.update({
-      where: { id: roleId },
-      data: { permissions: merged, updatedAt: new Date() },
-    });
-
-    await this.invalidatePermissionCache(tenantId);
-    return updated;
+  async assignPermissions(tenantId: string, roleId: string, permissionIds: string[]) {
+    await this.getRole(tenantId, roleId);
+    for (const permId of permissionIds) {
+      await prisma.rolePermission.upsert({
+        where: { roleId_permissionId: { roleId, permissionId: permId } },
+        create: { id: generateId(), roleId, permissionId: permId },
+        update: {},
+      });
+    }
+    return this.getPermissions(tenantId, roleId);
   }
 
   async removePermission(tenantId: string, roleId: string, permissionId: string) {
-    const role = await this.getRole(tenantId, roleId);
-    const filtered = (role.permissions as string[]).filter((p) => p !== permissionId);
-
-    const updated = await prisma.role.update({
-      where: { id: roleId },
-      data: { permissions: filtered, updatedAt: new Date() },
-    });
-
-    await this.invalidatePermissionCache(tenantId);
-    return updated;
+    await this.getRole(tenantId, roleId);
+    await prisma.rolePermission.delete({
+      where: { roleId_permissionId: { roleId, permissionId } },
+    }).catch(() => {});
+    return this.getPermissions(tenantId, roleId);
   }
 
   async listAllPermissions() {
-    // Return all available permissions from the Permission enum
-    const { Permission } = await import('@siteforge/shared');
-    return Object.values(Permission);
+    return prisma.permission.findMany({ orderBy: [{ resource: 'asc' }, { action: 'asc' }] });
   }
 
   async getUserPermissions(_userId: string, _tenantId: string) {
-    // User-role mapping is managed by user-service via TenantMembership.
-    // This endpoint returns permissions for a given roleId instead.
-    // The API gateway passes roleId from the auth token.
     return [];
   }
 
   async getRolePermissions(roleId: string) {
+    const rps = await prisma.rolePermission.findMany({
+      where: { roleId },
+      include: { permission: true },
+    });
+    return rps.map(rp => `${rp.permission.resource}:${rp.permission.action}`);
+  }
+
+  private async getRole(tenantId: string, roleId: string) {
     const role = await prisma.role.findUnique({
       where: { id: roleId },
       include: { permissions: { include: { permission: true } } },
     });
-    if (!role) throw new NotFoundError('Role', roleId);
-    return role.permissions.map(rp => `${rp.permission.resource}:${rp.permission.action}`);
-  }
-
-  private async getRole(tenantId: string, roleId: string) {
-    const role = await prisma.role.findUnique({ where: { id: roleId } });
     if (!role || role.tenantId !== tenantId) {
       throw new NotFoundError('Role', roleId);
     }
     return role;
-  }
-
-  private async invalidatePermissionCache(_tenantId: string) {
-    // Cache invalidation handled per-role, not per-membership
   }
 }
 

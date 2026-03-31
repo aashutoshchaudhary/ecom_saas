@@ -22,4 +22,4 @@ router.patch('/:installationId/disable', validate(togglePluginSchema), pluginCon
 router.get('/:installationId/config', validate(getPluginConfigSchema), pluginController.getConfig.bind(pluginController));
 router.put('/:installationId/config', validate(updatePluginConfigSchema), pluginController.updateConfig.bind(pluginController));
 
-export default router;
+export { router };

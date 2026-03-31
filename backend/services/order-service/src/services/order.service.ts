@@ -51,8 +51,8 @@ export class OrderService {
         discountAmount,
         totalAmount,
         currency: data.currency || 'USD',
-        shippingAddress: data.shippingAddress,
-        billingAddress: data.billingAddress,
+        shippingAddress: data.shippingAddress as any,
+        billingAddress: data.billingAddress as any,
         notes: data.notes,
         source: (data.source as any) || 'WEBSITE',
         items: {

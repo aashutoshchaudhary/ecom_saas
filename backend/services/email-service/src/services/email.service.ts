@@ -14,7 +14,7 @@ export class AppError extends Error {
 }
 
 export class EmailService {
-  private transporter: nodemailer.Transporter;
+  private transporter: any;
 
   constructor() {
     this.transporter = nodemailer.createTransport({
@@ -121,7 +121,7 @@ export class EmailService {
     body: string;
     variables: string[];
   }) {
-    return prisma.emailTemplate.create({ data });
+    return prisma.emailTemplate.create({ data } as any);
   }
 
   async listTemplates(tenantId?: string) {

@@ -161,19 +161,20 @@ export class AiService {
       let result: any;
 
       switch (job.type) {
-        case 'WEBSITE':
+        case 'WEBSITE_GENERATION':
+        case 'WEBSITE_REGENERATION':
           result = await this.processWebsiteGeneration(input);
           break;
-        case 'PAGE':
+        case 'PAGE_GENERATION':
           result = await this.processPageGeneration(input);
           break;
-        case 'SECTION':
+        case 'SECTION_GENERATION':
           result = await this.processSectionGeneration(input);
           break;
-        case 'CONTENT':
+        case 'CONTENT_GENERATION':
           result = await this.processContentGeneration(input);
           break;
-        case 'IMAGE':
+        case 'IMAGE_GENERATION':
           result = await this.processImageGeneration(input);
           break;
         default:
@@ -186,7 +187,7 @@ export class AiService {
           status: 'COMPLETED',
           output: result as any,
           completedAt: new Date(),
-          creditsUsed: this.calculateCredits(job.type),
+          creditsCost: this.calculateCredits(job.type),
         },
       });
 
@@ -582,12 +583,21 @@ Generate realistic business content.`;
   }
 
   private async createJob(tenantId: string, type: string, input: Record<string, unknown>) {
+    // Map short type names to Prisma enum values
+    const typeMap: Record<string, string> = {
+      'WEBSITE': 'WEBSITE_GENERATION', 'PAGE': 'PAGE_GENERATION',
+      'SECTION': 'SECTION_GENERATION', 'CONTENT': 'CONTENT_GENERATION',
+      'IMAGE': 'IMAGE_GENERATION',
+    };
+    const mappedType = typeMap[type] || type;
+
     const job = await prisma.aiJob.create({
       data: {
         id: generateId(),
         tenantId,
-        type,
-        status: 'QUEUED',
+        userId: (input.userId as string) || 'system',
+        type: mappedType as any,
+        status: 'PENDING',
         input: input as any,
       },
     });
@@ -597,7 +607,10 @@ Generate realistic business content.`;
 
   private calculateCredits(type: string): number {
     const creditMap: Record<string, number> = {
-      WEBSITE: 50, PAGE: 10, SECTION: 5, CONTENT: 3, IMAGE: 8,
+      WEBSITE_GENERATION: 50, WEBSITE_REGENERATION: 50,
+      PAGE_GENERATION: 10, SECTION_GENERATION: 5,
+      CONTENT_GENERATION: 3, IMAGE_GENERATION: 8,
+      SEO_OPTIMIZATION: 5,
     };
     return creditMap[type] || 5;
   }

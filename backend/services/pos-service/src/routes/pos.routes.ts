@@ -21,4 +21,4 @@ router.post('/:connectionId/sync/inventory', validate(syncSchema), posController
 router.get('/:connectionId/sync-logs', validate(getSyncLogsSchema), posController.getSyncLogs.bind(posController));
 router.post('/webhook/:provider', validate(webhookSchema), posController.handleWebhook.bind(posController));
 
-export default router;
+export { router };

@@ -18,4 +18,4 @@ router.post('/schedules', validate(scheduleReportSchema), reportingController.sc
 router.patch('/schedules/:scheduleId', validate(updateScheduleSchema), reportingController.updateSchedule.bind(reportingController));
 router.get('/schedules/list', reportingController.listSchedules.bind(reportingController));
 
-export default router;
+export { router };

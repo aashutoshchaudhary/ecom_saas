@@ -53,7 +53,7 @@ export class ProductService {
             weight: v.weight,
             dimensions: v.dimensions || {},
             isDefault: v.isDefault ?? i === 0,
-          })),
+          })) as any,
         } : undefined,
       },
       include: { variants: true },
@@ -158,7 +158,7 @@ export class ProductService {
         weight: data.weight,
         dimensions: data.dimensions || {},
         isDefault: data.isDefault ?? false,
-      },
+      } as any,
     });
   }
 
@@ -176,7 +176,7 @@ export class ProductService {
     if (data.isDefault) {
       await prisma.productVariant.updateMany({ where: { productId }, data: { isDefault: false } });
     }
-    return prisma.productVariant.update({ where: { id: variantId }, data });
+    return prisma.productVariant.update({ where: { id: variantId }, data } as any);
   }
 
   async deleteVariant(tenantId: string, productId: string, variantId: string) {

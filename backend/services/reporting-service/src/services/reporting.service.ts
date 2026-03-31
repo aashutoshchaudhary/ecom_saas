@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { StatusCodes } from 'http-status-codes';
-import PDFDocument from 'pdfkit';
+const PDFDocument = require('pdfkit');
 import { Readable } from 'stream';
 
 const prisma = new PrismaClient();
@@ -25,7 +25,7 @@ export class ReportingService {
         tenantId: data.tenantId,
         name: data.name,
         type: data.type,
-        parameters: data.parameters,
+        parameters: data.parameters as any,
         format: data.format,
         status: 'PROCESSING',
       },

@@ -19,4 +19,4 @@ router.delete('/:domainId', validate(removeDomainSchema), domainController.remov
 router.post('/:domainId/check-dns', validate(checkDnsSchema), domainController.checkDns.bind(domainController));
 router.post('/:domainId/renew-ssl', validate(renewSslSchema), domainController.renewSsl.bind(domainController));
 
-export default router;
+export { router };

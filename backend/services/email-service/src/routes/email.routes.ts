@@ -17,4 +17,4 @@ router.get('/templates', validate(listTemplatesSchema), emailController.listTemp
 router.post('/templates', validate(createTemplateSchema), emailController.createTemplate.bind(emailController));
 router.get('/logs', validate(listLogsSchema), emailController.listLogs.bind(emailController));
 
-export default router;
+export { router };

@@ -9,3 +9,4 @@ declare module 'pdf-lib';
 declare module 'compression';
 declare module 'hpp';
 declare module 'morgan';
+declare module 'jsonwebtoken';

@@ -1,9 +1,9 @@
-import amqplib, { Channel, Connection } from 'amqplib';
+import amqplib from 'amqplib';
 import { config } from '../config';
 import { analyticsService } from '../services/analytics.service';
 
-let connection: Connection | null = null;
-let channel: Channel | null = null;
+let connection: any = null;
+let channel: any = null;
 const EXCHANGE = 'siteforge.events';
 const QUEUE = 'analytics-service.events';
 
@@ -17,7 +17,7 @@ export async function startConsumers(): Promise<void> {
     await channel.bindQueue(QUEUE, EXCHANGE, 'order.created');
     await channel.bindQueue(QUEUE, EXCHANGE, 'payment.succeeded');
 
-    channel.consume(QUEUE, async (msg) => {
+    channel.consume(QUEUE, async (msg: any) => {
       if (!msg) return;
       try {
         const event = JSON.parse(msg.content.toString());

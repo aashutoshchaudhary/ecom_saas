@@ -1,8 +1,8 @@
-import amqplib, { Channel, Connection } from 'amqplib';
+import amqplib from 'amqplib';
 import { config } from '../config';
 
-let connection: Connection | null = null;
-let channel: Channel | null = null;
+let connection: any = null;
+let channel: any = null;
 
 const EXCHANGE = 'siteforge.events';
 const QUEUE = 'plugin-service.events';
@@ -17,7 +17,7 @@ export async function startConsumers(): Promise<void> {
     // Listen for tenant events
     await channel.bindQueue(QUEUE, EXCHANGE, 'tenant.deleted');
 
-    channel.consume(QUEUE, async (msg) => {
+    channel.consume(QUEUE, async (msg: any) => {
       if (!msg) return;
 
       try {

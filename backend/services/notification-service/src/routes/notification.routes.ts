@@ -20,4 +20,4 @@ router.put('/preferences', validate(updatePreferencesSchema), notificationContro
 router.get('/preferences', notificationController.getPreferences.bind(notificationController));
 router.post('/push/subscribe', validate(subscribePushSchema), notificationController.subscribePush.bind(notificationController));
 
-export default router;
+export { router };

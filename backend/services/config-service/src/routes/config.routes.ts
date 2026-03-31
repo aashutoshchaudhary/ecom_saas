@@ -24,4 +24,4 @@ router.post('/flags', validate(createFeatureFlagSchema), configController.create
 router.patch('/flags/:flagId/toggle', validate(toggleFeatureFlagSchema), configController.toggleFeatureFlag.bind(configController));
 router.put('/flags/:flagId', validate(updateFeatureFlagSchema), configController.updateFeatureFlag.bind(configController));
 
-export default router;
+export { router };

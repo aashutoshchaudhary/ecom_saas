@@ -6,7 +6,7 @@ import { emailService } from '../services/email.service';
 const connection = new IORedis({
   host: config.redis.host,
   port: config.redis.port,
-  password: config.redis.password,
+  password: (config.redis as any).password,
   maxRetriesPerRequest: null,
 });
 
@@ -15,7 +15,7 @@ export const emailQueue = new Queue('email-queue', { connection });
 export function startEmailWorker(): void {
   const worker = new Worker(
     'email-queue',
-    async (job) => {
+    async (job: any) => {
       const { type, data } = job.data;
 
       switch (type) {
@@ -39,11 +39,11 @@ export function startEmailWorker(): void {
     },
   );
 
-  worker.on('completed', (job) => {
+  worker.on('completed', (job: any) => {
     console.log(`Email job ${job.id} completed`);
   });
 
-  worker.on('failed', (job, error) => {
+  worker.on('failed', (job: any, error: any) => {
     console.error(`Email job ${job?.id} failed:`, error);
   });
 

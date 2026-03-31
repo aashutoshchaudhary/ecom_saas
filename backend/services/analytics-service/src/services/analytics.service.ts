@@ -40,7 +40,7 @@ export class AnalyticsService {
         sessionId: data.sessionId,
         visitorId: data.visitorId,
         eventType: data.eventType,
-        eventData: data.eventData || {},
+        eventData: (data.eventData || {}) as any,
         page: data.page,
         referrer: data.referrer,
         userAgent: data.userAgent,

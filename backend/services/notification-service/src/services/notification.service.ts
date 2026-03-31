@@ -54,7 +54,7 @@ export class NotificationService {
         channel: data.channel,
         title: data.title,
         body: data.body,
-        data: data.data || {},
+        data: (data.data || {}) as any,
         status: 'PENDING',
       },
     });
