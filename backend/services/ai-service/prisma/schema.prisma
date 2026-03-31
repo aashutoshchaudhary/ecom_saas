@@ -1,0 +1,43 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AiJobType {
+  WEBSITE_GENERATION
+  WEBSITE_REGENERATION
+  PAGE_GENERATION
+  SECTION_GENERATION
+  CONTENT_GENERATION
+  IMAGE_GENERATION
+  SEO_OPTIMIZATION
+}
+
+enum AiJobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model AiJob {
+  id          String      @id @default(cuid())
+  tenantId    String
+  userId      String
+  type        AiJobType
+  status      AiJobStatus @default(PENDING)
+  input       Json
+  output      Json?
+  model       String      @default("gpt-4")
+  tokensUsed  Int         @default(0)
+  creditsCost Int         @default(0)
+  error       String?
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}

@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  String             @id @default(uuid())
+  email               String             @unique
+  firstName           String
+  lastName            String
+  phone               String?
+  avatar              String?
+  bio                 String?
+  timezone            String             @default("UTC")
+  language            String             @default("en")
+  status              UserStatus         @default(ACTIVE)
+  onboardingCompleted Boolean            @default(false)
+  lastActiveAt        DateTime?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  tenantMemberships   TenantMembership[]
+
+  @@index([email])
+  @@index([status])
+}
+
+model TenantMembership {
+  id       String   @id @default(uuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenantId String
+  roleId   String
+  isOwner  Boolean  @default(false)
+  joinedAt DateTime @default(now())
+
+  @@unique([userId, tenantId])
+  @@index([tenantId])
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  DELETED
+}

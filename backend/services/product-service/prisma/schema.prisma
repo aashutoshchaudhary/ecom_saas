@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+model Product {
+  id          String          @id @default(cuid())
+  tenantId    String
+  name        String
+  slug        String
+  description String?
+  sku         String?
+  category    String?
+  tags        String[]
+  images      String[]
+  status      ProductStatus   @default(ACTIVE)
+  metadata    Json            @default("{}")
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  variants    ProductVariant[]
+
+  @@unique([tenantId, slug])
+}
+
+model ProductVariant {
+  id         String        @id @default(cuid())
+  productId  String
+  product    Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name       String
+  sku        String
+  attributes Json?
+  images     String[]
+  weight     Float?
+  dimensions Json?
+  isDefault  Boolean       @default(false)
+  status     ProductStatus @default(ACTIVE)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@unique([productId, sku])
+}

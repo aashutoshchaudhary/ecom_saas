@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  FREE_SHIPPING
+}
+
+model Price {
+  id             String   @id @default(cuid())
+  tenantId       String
+  productId      String
+  variantId      String
+  currency       String   @default("USD")
+  amount         Decimal  @db.Decimal(10, 2)
+  compareAtPrice Decimal?
+  costPrice      Decimal?
+  taxRate        Decimal  @default(0) @db.Decimal(5, 2)
+  taxInclusive   Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([tenantId, productId, variantId, currency])
+}
+
+model Discount {
+  id             String       @id @default(cuid())
+  tenantId       String
+  code           String
+  type           DiscountType
+  value          Decimal      @db.Decimal(10, 2)
+  minOrderAmount Decimal?
+  maxUses        Int?
+  usedCount      Int          @default(0)
+  startsAt       DateTime
+  expiresAt      DateTime?
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+
+  @@unique([tenantId, code])
+}
+
+model CurrencyRate {
+  id             String   @id @default(cuid())
+  baseCurrency   String
+  targetCurrency String
+  rate           Decimal  @db.Decimal(10, 6)
+  updatedAt      DateTime @updatedAt
+
+  @@unique([baseCurrency, targetCurrency])
+}

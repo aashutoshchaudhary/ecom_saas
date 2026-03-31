@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  tenantId  String
+  userId    String
+  type      String
+  channel   String
+  title     String
+  body      String
+  data      Json      @default("{}")
+  status    String    @default("PENDING")
+  readAt    DateTime?
+  sentAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model NotificationPreference {
+  id        String  @id @default(cuid())
+  userId    String
+  tenantId  String
+  channel   String
+  eventType String
+  enabled   Boolean @default(true)
+
+  @@unique([userId, tenantId, channel, eventType])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  tenantId  String
+  endpoint  String
+  keys      Json
+  createdAt DateTime @default(now())
+
+  @@unique([userId, endpoint])
+}

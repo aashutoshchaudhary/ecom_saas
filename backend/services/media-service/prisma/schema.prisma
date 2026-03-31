@@ -1,0 +1,27 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model MediaFile {
+  id           String   @id @default(cuid())
+  tenantId     String
+  fileName     String
+  originalName String
+  mimeType     String
+  size         Int
+  s3Key        String
+  s3Bucket     String
+  cdnUrl       String?
+  folder       String   @default("/")
+  alt          String?
+  metadata     Json     @default("{}")
+  uploadedBy   String
+  createdAt    DateTime @default(now())
+
+  @@index([tenantId, folder])
+}

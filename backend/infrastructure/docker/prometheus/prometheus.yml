@@ -1,0 +1,221 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  scrape_timeout: 10s
+
+  external_labels:
+    cluster: siteforge-local
+    environment: development
+
+rule_files: []
+
+scrape_configs:
+  # ---------------------------------------------------------------------------
+  # Prometheus self-monitoring
+  # ---------------------------------------------------------------------------
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # ---------------------------------------------------------------------------
+  # API Gateway
+  # ---------------------------------------------------------------------------
+  - job_name: "api-gateway"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["api-gateway:3000"]
+        labels:
+          service: api-gateway
+          group: gateway
+
+  # ---------------------------------------------------------------------------
+  # Identity services
+  # ---------------------------------------------------------------------------
+  - job_name: "identity-services"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["auth-service:3001"]
+        labels:
+          service: auth-service
+          group: identity
+      - targets: ["user-service:3002"]
+        labels:
+          service: user-service
+          group: identity
+      - targets: ["role-service:3003"]
+        labels:
+          service: role-service
+          group: identity
+
+  # ---------------------------------------------------------------------------
+  # Core services
+  # ---------------------------------------------------------------------------
+  - job_name: "core-services"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["tenant-service:3004"]
+        labels:
+          service: tenant-service
+          group: core
+      - targets: ["industry-service:3005"]
+        labels:
+          service: industry-service
+          group: core
+
+  # ---------------------------------------------------------------------------
+  # Website services
+  # ---------------------------------------------------------------------------
+  - job_name: "website-services"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["website-service:3006"]
+        labels:
+          service: website-service
+          group: website
+      - targets: ["template-service:3007"]
+        labels:
+          service: template-service
+          group: website
+      - targets: ["theme-service:3008"]
+        labels:
+          service: theme-service
+          group: website
+
+  # ---------------------------------------------------------------------------
+  # AI services
+  # ---------------------------------------------------------------------------
+  - job_name: "ai-services"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["ai-service:3009"]
+        labels:
+          service: ai-service
+          group: ai
+      - targets: ["ai-version-service:3010"]
+        labels:
+          service: ai-version-service
+          group: ai
+
+  # ---------------------------------------------------------------------------
+  # Commerce services
+  # ---------------------------------------------------------------------------
+  - job_name: "commerce-services"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["product-service:3011"]
+        labels:
+          service: product-service
+          group: commerce
+      - targets: ["inventory-service:3012"]
+        labels:
+          service: inventory-service
+          group: commerce
+      - targets: ["pricing-service:3013"]
+        labels:
+          service: pricing-service
+          group: commerce
+
+  # ---------------------------------------------------------------------------
+  # Order services
+  # ---------------------------------------------------------------------------
+  - job_name: "order-services"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["order-service:3014"]
+        labels:
+          service: order-service
+          group: orders
+      - targets: ["payment-service:3015"]
+        labels:
+          service: payment-service
+          group: orders
+      - targets: ["refund-service:3016"]
+        labels:
+          service: refund-service
+          group: orders
+      - targets: ["wallet-service:3017"]
+        labels:
+          service: wallet-service
+          group: orders
+
+  # ---------------------------------------------------------------------------
+  # Platform services
+  # ---------------------------------------------------------------------------
+  - job_name: "platform-services"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["plugin-service:3018"]
+        labels:
+          service: plugin-service
+          group: platform
+      - targets: ["domain-service:3019"]
+        labels:
+          service: domain-service
+          group: platform
+      - targets: ["email-service:3020"]
+        labels:
+          service: email-service
+          group: platform
+      - targets: ["pos-service:3021"]
+        labels:
+          service: pos-service
+          group: platform
+
+  # ---------------------------------------------------------------------------
+  # Insights services
+  # ---------------------------------------------------------------------------
+  - job_name: "insights-services"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["analytics-service:3022"]
+        labels:
+          service: analytics-service
+          group: insights
+      - targets: ["reporting-service:3023"]
+        labels:
+          service: reporting-service
+          group: insights
+      - targets: ["notification-service:3024"]
+        labels:
+          service: notification-service
+          group: insights
+
+  # ---------------------------------------------------------------------------
+  # System services
+  # ---------------------------------------------------------------------------
+  - job_name: "system-services"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["media-service:3025"]
+        labels:
+          service: media-service
+          group: system
+      - targets: ["config-service:3026"]
+        labels:
+          service: config-service
+          group: system
+      - targets: ["audit-service:3027"]
+        labels:
+          service: audit-service
+          group: system
+
+  # ---------------------------------------------------------------------------
+  # Infrastructure
+  # ---------------------------------------------------------------------------
+  - job_name: "redis"
+    static_configs:
+      - targets: ["redis-exporter:9121"]
+        labels:
+          service: redis
+
+  - job_name: "kafka"
+    static_configs:
+      - targets: ["kafka-exporter:9308"]
+        labels:
+          service: kafka
+
+  - job_name: "postgres"
+    static_configs:
+      - targets: ["postgres-exporter:9187"]
+        labels:
+          service: postgres

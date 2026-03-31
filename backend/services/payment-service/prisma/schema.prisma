@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PaymentProvider {
+  STRIPE
+  PAYPAL
+  CLOVER
+  NMI
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+model Payment {
+  id                String          @id @default(cuid())
+  tenantId          String
+  orderId           String
+  amount            Decimal         @db.Decimal(10, 2)
+  currency          String          @default("USD")
+  provider          PaymentProvider
+  providerPaymentId String?
+  status            PaymentStatus   @default(PENDING)
+  method            String?
+  cardLast4         String?
+  idempotencyKey    String          @unique
+  metadata          Json            @default("{}")
+  failureReason     String?
+  paidAt            DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+}
+
+model PaymentWebhookLog {
+  id        String          @id @default(cuid())
+  provider  PaymentProvider
+  eventType String
+  payload   Json
+  processed Boolean         @default(false)
+  error     String?
+  createdAt DateTime        @default(now())
+}

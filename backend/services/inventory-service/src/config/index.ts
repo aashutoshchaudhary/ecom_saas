@@ -1,0 +1,11 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
+export const config = {
+  port: parseInt(process.env.PORT || '3012', 10),
+  nodeEnv: process.env.NODE_ENV || 'development',
+  database: { url: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/inventory_service_db' },
+  redis: { host: process.env.REDIS_HOST || 'localhost', port: parseInt(process.env.REDIS_PORT || '6379', 10) },
+  kafka: { brokers: (process.env.KAFKA_BROKERS || 'localhost:9092').split(',') },
+  jwt: { secret: process.env.JWT_SECRET || 'dev-jwt-secret' },
+};

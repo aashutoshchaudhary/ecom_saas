@@ -1,0 +1,37 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Template {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  industry      String?
+  category      String?
+  thumbnail     String?
+  structure     Json?
+  pages         Json?
+  theme         Json?
+  components    Json?
+  isAiGenerated Boolean  @default(false)
+  isPublic      Boolean  @default(true)
+  tenantId      String?
+  usageCount    Int      @default(0)
+  rating        Float    @default(0)
+  tags          String[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model TemplateCategory {
+  id          String @id @default(cuid())
+  name        String @unique
+  description String?
+  icon        String?
+  sortOrder   Int    @default(0)
+}

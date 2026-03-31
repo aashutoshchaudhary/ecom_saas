@@ -1,0 +1,258 @@
+# Default deny all ingress and egress traffic
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: siteforge-prod
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+# Allow DNS resolution for all pods
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+  namespace: siteforge-prod
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to: []
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+# Allow ingress traffic to api-gateway from ALB
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-to-gateway
+  namespace: siteforge-prod
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: api-gateway
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 3000
+---
+# Allow api-gateway to reach all microservices
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-gateway-to-services
+  namespace: siteforge-prod
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: siteforge
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: api-gateway
+      ports:
+        - protocol: TCP
+          port: 3001
+        - protocol: TCP
+          port: 3002
+        - protocol: TCP
+          port: 3003
+        - protocol: TCP
+          port: 3004
+        - protocol: TCP
+          port: 3005
+        - protocol: TCP
+          port: 3006
+        - protocol: TCP
+          port: 3007
+        - protocol: TCP
+          port: 3008
+        - protocol: TCP
+          port: 3009
+        - protocol: TCP
+          port: 3010
+        - protocol: TCP
+          port: 3011
+        - protocol: TCP
+          port: 3012
+        - protocol: TCP
+          port: 3013
+        - protocol: TCP
+          port: 3014
+        - protocol: TCP
+          port: 3015
+        - protocol: TCP
+          port: 3016
+        - protocol: TCP
+          port: 3017
+        - protocol: TCP
+          port: 3018
+        - protocol: TCP
+          port: 3019
+        - protocol: TCP
+          port: 3020
+        - protocol: TCP
+          port: 3021
+        - protocol: TCP
+          port: 3022
+        - protocol: TCP
+          port: 3023
+        - protocol: TCP
+          port: 3024
+        - protocol: TCP
+          port: 3025
+        - protocol: TCP
+          port: 3026
+        - protocol: TCP
+          port: 3027
+---
+# Allow all services to connect to PostgreSQL databases
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-services-to-postgres
+  namespace: siteforge-prod
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: siteforge
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgresql
+      ports:
+        - protocol: TCP
+          port: 5432
+    # Allow egress to RDS endpoints (external)
+    - ports:
+        - protocol: TCP
+          port: 5432
+---
+# Allow all services to connect to Redis
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-services-to-redis
+  namespace: siteforge-prod
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: siteforge
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    # Allow egress to ElastiCache endpoints (external)
+    - ports:
+        - protocol: TCP
+          port: 6379
+---
+# Allow all services to connect to Kafka
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-services-to-kafka
+  namespace: siteforge-prod
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: siteforge
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: kafka
+      ports:
+        - protocol: TCP
+          port: 9092
+        - protocol: TCP
+          port: 29092
+    # Allow egress to MSK endpoints (external)
+    - ports:
+        - protocol: TCP
+          port: 9092
+---
+# Allow inter-service communication (services calling each other via Kafka events)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-inter-service-communication
+  namespace: siteforge-prod
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: siteforge
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: siteforge
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: siteforge
+---
+# Allow services to reach external HTTPS endpoints (APIs, S3, etc.)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-external-https
+  namespace: siteforge-prod
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: siteforge
+  policyTypes:
+    - Egress
+  egress:
+    - ports:
+        - protocol: TCP
+          port: 443
+---
+# Allow Prometheus to scrape all services
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-prometheus-scraping
+  namespace: siteforge-prod
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: siteforge
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: siteforge-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus

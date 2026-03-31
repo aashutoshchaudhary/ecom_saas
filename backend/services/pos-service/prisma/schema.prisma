@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PosProvider {
+  CLOVER
+  SQUARE
+}
+
+model PosConnection {
+  id           String      @id @default(cuid())
+  tenantId     String
+  provider     PosProvider
+  merchantId   String
+  accessToken  String
+  refreshToken String?
+  locationId   String?
+  settings     Json        @default("{}")
+  status       String      @default("ACTIVE")
+  lastSyncAt   DateTime?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@unique([tenantId, provider])
+}
+
+model PosSyncLog {
+  id               String    @id @default(cuid())
+  connectionId     String
+  type             String
+  direction        String
+  recordsProcessed Int       @default(0)
+  errors           Json      @default("[]")
+  startedAt        DateTime  @default(now())
+  completedAt      DateTime?
+}

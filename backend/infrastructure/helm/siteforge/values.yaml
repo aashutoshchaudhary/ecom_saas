@@ -1,0 +1,715 @@
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  environment: production
+
+image:
+  registry: ""
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+# ---------------------------------------------------------------------------
+# Microservice definitions
+# ---------------------------------------------------------------------------
+services:
+  api-gateway:
+    enabled: true
+    replicaCount: 2
+    port: 3000
+    image:
+      repository: siteforge/api-gateway
+    resources:
+      requests:
+        cpu: 250m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    env:
+      SERVICE_NAME: api-gateway
+    hpa:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPU: 70
+
+  auth-service:
+    enabled: true
+    replicaCount: 2
+    port: 3001
+    image:
+      repository: siteforge/auth-service
+    resources:
+      requests:
+        cpu: 200m
+        memory: 256Mi
+      limits:
+        cpu: 400m
+        memory: 512Mi
+    env:
+      SERVICE_NAME: auth-service
+      DATABASE_HOST: postgres-identity
+      DATABASE_NAME: auth_db
+    hpa:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 8
+      targetCPU: 70
+
+  user-service:
+    enabled: true
+    replicaCount: 2
+    port: 3002
+    image:
+      repository: siteforge/user-service
+    resources:
+      requests:
+        cpu: 200m
+        memory: 256Mi
+      limits:
+        cpu: 400m
+        memory: 512Mi
+    env:
+      SERVICE_NAME: user-service
+      DATABASE_HOST: postgres-identity
+      DATABASE_NAME: user_db
+    hpa:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 8
+      targetCPU: 70
+
+  role-service:
+    enabled: true
+    replicaCount: 1
+    port: 3003
+    image:
+      repository: siteforge/role-service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 250m
+        memory: 256Mi
+    env:
+      SERVICE_NAME: role-service
+      DATABASE_HOST: postgres-identity
+      DATABASE_NAME: role_db
+    hpa:
+      enabled: true
+      minReplicas: 1
+      maxReplicas: 4
+      targetCPU: 70
+
+  tenant-service:
+    enabled: true
+    replicaCount: 2
+    port: 3004
+    image:
+      repository: siteforge/tenant-service
+    resources:
+      requests:
+        cpu: 200m
+        memory: 256Mi
+      limits:
+        cpu: 400m
+        memory: 512Mi
+    env:
+      SERVICE_NAME: tenant-service
+      DATABASE_HOST: postgres-core
+      DATABASE_NAME: tenant_db
+    hpa:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 8
+      targetCPU: 70
+
+  industry-service:
+    enabled: true
+    replicaCount: 1
+    port: 3005
+    image:
+      repository: siteforge/industry-service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 250m
+        memory: 256Mi
+    env:
+      SERVICE_NAME: industry-service
+      DATABASE_HOST: postgres-core
+      DATABASE_NAME: industry_db
+    hpa:
+      enabled: true
+      minReplicas: 1
+      maxReplicas: 4
+      targetCPU: 70
+
+  website-service:
+    enabled: true
+    replicaCount: 2
+    port: 3006
+    image:
+      repository: siteforge/website-service
+    resources:
+      requests:
+        cpu: 250m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    env:
+      SERVICE_NAME: website-service
+      DATABASE_HOST: postgres-website
+      DATABASE_NAME: website_db
+    hpa:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPU: 70
+
+  template-service:
+    enabled: true
+    replicaCount: 2
+    port: 3007
+    image:
+      repository: siteforge/template-service
+    resources:
+      requests:
+        cpu: 200m
+        memory: 256Mi
+      limits:
+        cpu: 400m
+        memory: 512Mi
+    env:
+      SERVICE_NAME: template-service
+      DATABASE_HOST: postgres-website
+      DATABASE_NAME: template_db
+    hpa:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 8
+      targetCPU: 70
+
+  theme-service:
+    enabled: true
+    replicaCount: 1
+    port: 3008
+    image:
+      repository: siteforge/theme-service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 250m
+        memory: 256Mi
+    env:
+      SERVICE_NAME: theme-service
+      DATABASE_HOST: postgres-website
+      DATABASE_NAME: theme_db
+    hpa:
+      enabled: true
+      minReplicas: 1
+      maxReplicas: 4
+      targetCPU: 70
+
+  ai-service:
+    enabled: true
+    replicaCount: 2
+    port: 3009
+    image:
+      repository: siteforge/ai-service
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+    env:
+      SERVICE_NAME: ai-service
+      DATABASE_HOST: postgres-ai
+      DATABASE_NAME: ai_db
+    hpa:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPU: 70
+    nodeSelector:
+      workload-type: ai
+
+  ai-version-service:
+    enabled: true
+    replicaCount: 1
+    port: 3010
+    image:
+      repository: siteforge/ai-version-service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 250m
+        memory: 256Mi
+    env:
+      SERVICE_NAME: ai-version-service
+      DATABASE_HOST: postgres-ai
+      DATABASE_NAME: ai_version_db
+    hpa:
+      enabled: true
+      minReplicas: 1
+      maxReplicas: 4
+      targetCPU: 70
+
+  product-service:
+    enabled: true
+    replicaCount: 2
+    port: 3011
+    image:
+      repository: siteforge/product-service
+    resources:
+      requests:
+        cpu: 200m
+        memory: 256Mi
+      limits:
+        cpu: 400m
+        memory: 512Mi
+    env:
+      SERVICE_NAME: product-service
+      DATABASE_HOST: postgres-commerce
+      DATABASE_NAME: product_db
+    hpa:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 8
+      targetCPU: 70
+
+  inventory-service:
+    enabled: true
+    replicaCount: 2
+    port: 3012
+    image:
+      repository: siteforge/inventory-service
+    resources:
+      requests:
+        cpu: 200m
+        memory: 256Mi
+      limits:
+        cpu: 400m
+        memory: 512Mi
+    env:
+      SERVICE_NAME: inventory-service
+      DATABASE_HOST: postgres-commerce
+      DATABASE_NAME: inventory_db
+    hpa:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 8
+      targetCPU: 70
+
+  pricing-service:
+    enabled: true
+    replicaCount: 1
+    port: 3013
+    image:
+      repository: siteforge/pricing-service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 250m
+        memory: 256Mi
+    env:
+      SERVICE_NAME: pricing-service
+      DATABASE_HOST: postgres-commerce
+      DATABASE_NAME: pricing_db
+    hpa:
+      enabled: true
+      minReplicas: 1
+      maxReplicas: 4
+      targetCPU: 70
+
+  order-service:
+    enabled: true
+    replicaCount: 2
+    port: 3014
+    image:
+      repository: siteforge/order-service
+    resources:
+      requests:
+        cpu: 250m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    env:
+      SERVICE_NAME: order-service
+      DATABASE_HOST: postgres-orders
+      DATABASE_NAME: order_db
+    hpa:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPU: 70
+
+  payment-service:
+    enabled: true
+    replicaCount: 2
+    port: 3015
+    image:
+      repository: siteforge/payment-service
+    resources:
+      requests:
+        cpu: 250m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    env:
+      SERVICE_NAME: payment-service
+      DATABASE_HOST: postgres-orders
+      DATABASE_NAME: payment_db
+    hpa:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 8
+      targetCPU: 70
+
+  refund-service:
+    enabled: true
+    replicaCount: 1
+    port: 3016
+    image:
+      repository: siteforge/refund-service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 250m
+        memory: 256Mi
+    env:
+      SERVICE_NAME: refund-service
+      DATABASE_HOST: postgres-orders
+      DATABASE_NAME: refund_db
+    hpa:
+      enabled: true
+      minReplicas: 1
+      maxReplicas: 4
+      targetCPU: 70
+
+  wallet-service:
+    enabled: true
+    replicaCount: 1
+    port: 3017
+    image:
+      repository: siteforge/wallet-service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 250m
+        memory: 256Mi
+    env:
+      SERVICE_NAME: wallet-service
+      DATABASE_HOST: postgres-orders
+      DATABASE_NAME: wallet_db
+    hpa:
+      enabled: true
+      minReplicas: 1
+      maxReplicas: 4
+      targetCPU: 70
+
+  plugin-service:
+    enabled: true
+    replicaCount: 1
+    port: 3018
+    image:
+      repository: siteforge/plugin-service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 250m
+        memory: 256Mi
+    env:
+      SERVICE_NAME: plugin-service
+      DATABASE_HOST: postgres-platform
+      DATABASE_NAME: plugin_db
+    hpa:
+      enabled: true
+      minReplicas: 1
+      maxReplicas: 4
+      targetCPU: 70
+
+  domain-service:
+    enabled: true
+    replicaCount: 1
+    port: 3019
+    image:
+      repository: siteforge/domain-service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 250m
+        memory: 256Mi
+    env:
+      SERVICE_NAME: domain-service
+      DATABASE_HOST: postgres-platform
+      DATABASE_NAME: domain_db
+    hpa:
+      enabled: true
+      minReplicas: 1
+      maxReplicas: 4
+      targetCPU: 70
+
+  email-service:
+    enabled: true
+    replicaCount: 1
+    port: 3020
+    image:
+      repository: siteforge/email-service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 250m
+        memory: 256Mi
+    env:
+      SERVICE_NAME: email-service
+      DATABASE_HOST: postgres-platform
+      DATABASE_NAME: email_db
+    hpa:
+      enabled: true
+      minReplicas: 1
+      maxReplicas: 4
+      targetCPU: 70
+
+  pos-service:
+    enabled: true
+    replicaCount: 1
+    port: 3021
+    image:
+      repository: siteforge/pos-service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 250m
+        memory: 256Mi
+    env:
+      SERVICE_NAME: pos-service
+      DATABASE_HOST: postgres-platform
+      DATABASE_NAME: pos_db
+    hpa:
+      enabled: true
+      minReplicas: 1
+      maxReplicas: 4
+      targetCPU: 70
+
+  analytics-service:
+    enabled: true
+    replicaCount: 2
+    port: 3022
+    image:
+      repository: siteforge/analytics-service
+    resources:
+      requests:
+        cpu: 250m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    env:
+      SERVICE_NAME: analytics-service
+      DATABASE_HOST: postgres-insights
+      DATABASE_NAME: analytics_db
+    hpa:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 8
+      targetCPU: 70
+
+  reporting-service:
+    enabled: true
+    replicaCount: 1
+    port: 3023
+    image:
+      repository: siteforge/reporting-service
+    resources:
+      requests:
+        cpu: 200m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    env:
+      SERVICE_NAME: reporting-service
+      DATABASE_HOST: postgres-insights
+      DATABASE_NAME: reporting_db
+    hpa:
+      enabled: true
+      minReplicas: 1
+      maxReplicas: 4
+      targetCPU: 70
+
+  notification-service:
+    enabled: true
+    replicaCount: 1
+    port: 3024
+    image:
+      repository: siteforge/notification-service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 250m
+        memory: 256Mi
+    env:
+      SERVICE_NAME: notification-service
+      DATABASE_HOST: postgres-insights
+      DATABASE_NAME: notification_db
+    hpa:
+      enabled: true
+      minReplicas: 1
+      maxReplicas: 4
+      targetCPU: 70
+
+  media-service:
+    enabled: true
+    replicaCount: 2
+    port: 3025
+    image:
+      repository: siteforge/media-service
+    resources:
+      requests:
+        cpu: 250m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    env:
+      SERVICE_NAME: media-service
+      DATABASE_HOST: postgres-system
+      DATABASE_NAME: media_db
+    hpa:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 8
+      targetCPU: 70
+
+  config-service:
+    enabled: true
+    replicaCount: 1
+    port: 3026
+    image:
+      repository: siteforge/config-service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 250m
+        memory: 256Mi
+    env:
+      SERVICE_NAME: config-service
+      DATABASE_HOST: postgres-system
+      DATABASE_NAME: config_db
+    hpa:
+      enabled: true
+      minReplicas: 1
+      maxReplicas: 4
+      targetCPU: 70
+
+  audit-service:
+    enabled: true
+    replicaCount: 1
+    port: 3027
+    image:
+      repository: siteforge/audit-service
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 250m
+        memory: 256Mi
+    env:
+      SERVICE_NAME: audit-service
+      DATABASE_HOST: postgres-system
+      DATABASE_NAME: audit_db
+    hpa:
+      enabled: true
+      minReplicas: 1
+      maxReplicas: 4
+      targetCPU: 70
+
+# ---------------------------------------------------------------------------
+# Infrastructure configuration
+# ---------------------------------------------------------------------------
+database:
+  host: ""
+  port: 5432
+  username: siteforge
+  existingSecret: siteforge-db-credentials
+  secretKey: password
+
+redis:
+  host: redis-master
+  port: 6379
+  existingSecret: siteforge-redis-credentials
+  secretKey: password
+
+kafka:
+  brokers: kafka:9092
+  existingSecret: ""
+
+s3:
+  endpoint: ""
+  bucket: siteforge-assets
+  region: us-east-1
+  existingSecret: siteforge-s3-credentials
+
+ingress:
+  enabled: true
+  className: alb
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/certificate-arn: ""
+    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS13-1-2-2021-06
+    alb.ingress.kubernetes.io/healthcheck-path: /health
+  host: api.siteforge.ai
+  tls: true
+
+# External dependency charts
+postgresql:
+  enabled: false
+
+redis:
+  enabled: false
+
+kafka:
+  enabled: false

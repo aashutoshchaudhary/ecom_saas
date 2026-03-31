@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: siteforge-prod
+  labels:
+    app.kubernetes.io/part-of: siteforge
+    environment: production
+    istio-injection: enabled
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: siteforge-staging
+  labels:
+    app.kubernetes.io/part-of: siteforge
+    environment: staging
+    istio-injection: enabled
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: siteforge-system
+  labels:
+    app.kubernetes.io/part-of: siteforge
+    environment: system
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: siteforge-prod-quota
+  namespace: siteforge-prod
+spec:
+  hard:
+    requests.cpu: "40"
+    requests.memory: 80Gi
+    limits.cpu: "80"
+    limits.memory: 160Gi
+    pods: "200"
+    services: "50"
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: siteforge-staging-quota
+  namespace: siteforge-staging
+spec:
+  hard:
+    requests.cpu: "20"
+    requests.memory: 40Gi
+    limits.cpu: "40"
+    limits.memory: 80Gi
+    pods: "100"
+    services: "50"
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: siteforge-limit-range
+  namespace: siteforge-prod
+spec:
+  limits:
+    - default:
+        cpu: 500m
+        memory: 512Mi
+      defaultRequest:
+        cpu: 100m
+        memory: 128Mi
+      type: Container
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: siteforge-limit-range
+  namespace: siteforge-staging
+spec:
+  limits:
+    - default:
+        cpu: 250m
+        memory: 256Mi
+      defaultRequest:
+        cpu: 50m
+        memory: 64Mi
+      type: Container

@@ -1,0 +1,22 @@
+apiVersion: v2
+name: siteforge
+description: SiteForge AI Platform Helm Chart
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+dependencies:
+  - name: postgresql
+    version: "~15.0"
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+  - name: redis
+    version: "~19.0"
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
+  - name: kafka
+    version: "~28.0"
+    repository: https://charts.bitnami.com/bitnami
+    condition: kafka.enabled
+maintainers:
+  - name: SiteForge Team
+    email: devops@siteforge.ai

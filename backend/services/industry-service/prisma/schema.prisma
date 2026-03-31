@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Industry {
+  id              String             @id @default(cuid())
+  name            String             @unique
+  slug            String             @unique
+  description     String?
+  icon            String?
+  features        Json               @default("[]")
+  defaultConfig   Json               @default("{}")
+  requiredPlugins String[]
+  isActive        Boolean            @default(true)
+  sortOrder       Int                @default(0)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  templates       IndustryTemplate[]
+}
+
+model IndustryTemplate {
+  id         String   @id @default(cuid())
+  industryId String
+  industry   Industry @relation(fields: [industryId], references: [id])
+  templateId String
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@unique([industryId, templateId])
+}

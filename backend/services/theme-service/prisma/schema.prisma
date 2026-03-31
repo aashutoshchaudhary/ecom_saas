@@ -1,0 +1,25 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Theme {
+  id         String   @id @default(cuid())
+  name       String
+  tenantId   String?
+  colors     Json
+  typography Json
+  header     Json
+  footer     Json
+  spacing    Json     @default("{}")
+  borders    Json     @default("{}")
+  shadows    Json     @default("{}")
+  isSystem   Boolean  @default(false)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}

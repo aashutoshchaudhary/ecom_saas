@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AuthCredential {
+  id                 String    @id @default(uuid())
+  userId             String    @unique
+  email              String    @unique
+  passwordHash       String
+  mfaEnabled         Boolean   @default(false)
+  mfaSecret          String?
+  mfaBackupCodes     String[]
+  emailVerified      Boolean   @default(false)
+  emailVerifyToken   String?
+  passwordResetToken String?
+  passwordResetExpiry DateTime?
+  failedAttempts     Int       @default(0)
+  lockedUntil        DateTime?
+  lastLogin          DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  sessions           Session[]
+
+  @@index([email])
+}
+
+model Session {
+  id           String         @id @default(uuid())
+  authId       String
+  auth         AuthCredential @relation(fields: [authId], references: [id], onDelete: Cascade)
+  token        String         @unique
+  refreshToken String         @unique
+  deviceInfo   String?
+  ipAddress    String?
+  userAgent    String?
+  expiresAt    DateTime
+  createdAt    DateTime       @default(now())
+
+  @@index([authId])
+  @@index([expiresAt])
+}
+
+model OAuthProvider {
+  id          String   @id @default(uuid())
+  userId      String
+  provider    String
+  providerId  String
+  accessToken String?
+  createdAt   DateTime @default(now())
+
+  @@unique([provider, providerId])
+  @@index([userId])
+}

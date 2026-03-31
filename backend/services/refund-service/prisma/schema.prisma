@@ -1,0 +1,37 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RefundType {
+  FULL
+  PARTIAL
+}
+
+enum RefundStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model Refund {
+  id               String       @id @default(cuid())
+  tenantId         String
+  orderId          String
+  paymentId        String
+  amount           Decimal      @db.Decimal(10, 2)
+  currency         String
+  type             RefundType
+  reason           String?
+  status           RefundStatus @default(PENDING)
+  providerRefundId String?
+  processedBy      String?
+  processedAt      DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+}

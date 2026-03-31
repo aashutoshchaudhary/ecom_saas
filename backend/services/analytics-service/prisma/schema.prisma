@@ -1,0 +1,40 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  tenantId  String
+  websiteId String?
+  sessionId String?
+  visitorId String?
+  eventType String
+  eventData Json     @default("{}")
+  page      String?
+  referrer  String?
+  userAgent String?
+  ipAddress String?
+  country   String?
+  createdAt DateTime @default(now())
+
+  @@index([tenantId, eventType, createdAt])
+}
+
+model DailyMetrics {
+  id            String   @id @default(cuid())
+  tenantId      String
+  date          DateTime @db.Date
+  visitors      Int      @default(0)
+  pageViews     Int      @default(0)
+  orders        Int      @default(0)
+  revenue       Decimal  @default(0) @db.Decimal(10, 2)
+  conversion    Decimal  @default(0) @db.Decimal(5, 2)
+  avgOrderValue Decimal  @default(0) @db.Decimal(10, 2)
+
+  @@unique([tenantId, date])
+}

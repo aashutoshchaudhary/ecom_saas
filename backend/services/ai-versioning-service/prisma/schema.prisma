@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AiVersion {
+  id            String   @id @default(cuid())
+  tenantId      String
+  websiteId     String
+  jobId         String
+  versionNumber Int
+  snapshot      Json
+  diff          Json?
+  metadata      Json     @default("{}")
+  createdBy     String
+  createdAt     DateTime @default(now())
+
+  @@unique([websiteId, versionNumber])
+}
+
+model AiComparison {
+  id         String   @id @default(cuid())
+  tenantId   String
+  versionAId String
+  versionBId String
+  diff       Json
+  createdAt  DateTime @default(now())
+}

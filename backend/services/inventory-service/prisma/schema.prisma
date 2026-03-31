@@ -1,0 +1,48 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MovementType {
+  PURCHASE
+  SALE
+  RETURN
+  ADJUSTMENT
+  TRANSFER
+  RESERVED
+  RELEASED
+}
+
+model InventoryItem {
+  id                String              @id @default(cuid())
+  tenantId          String
+  productId         String
+  variantId         String?
+  sku               String
+  quantity          Int                 @default(0)
+  reserved          Int                 @default(0)
+  lowStockThreshold Int                 @default(10)
+  trackInventory    Boolean             @default(true)
+  allowBackorder    Boolean             @default(false)
+  location          String?
+  updatedAt         DateTime            @updatedAt
+  movements         InventoryMovement[]
+
+  @@unique([tenantId, sku])
+}
+
+model InventoryMovement {
+  id          String        @id @default(cuid())
+  inventoryId String
+  inventory   InventoryItem @relation(fields: [inventoryId], references: [id])
+  type        MovementType
+  quantity    Int
+  reason      String?
+  referenceId String?
+  createdBy   String?
+  createdAt   DateTime      @default(now())
+}

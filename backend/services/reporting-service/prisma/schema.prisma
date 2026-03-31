@@ -1,0 +1,31 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Report {
+  id          String    @id @default(cuid())
+  tenantId    String
+  name        String
+  type        String
+  parameters  Json      @default("{}")
+  format      String    @default("PDF")
+  fileUrl     String?
+  status      String    @default("PENDING")
+  generatedAt DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model ScheduledReport {
+  id         String    @id @default(cuid())
+  tenantId   String
+  reportType String
+  schedule   String
+  recipients String[]
+  isActive   Boolean   @default(true)
+  lastRunAt  DateTime?
+}

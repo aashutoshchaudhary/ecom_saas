@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum WebsiteStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model Website {
+  id          String        @id @default(cuid())
+  tenantId    String
+  name        String
+  slug        String
+  domain      String?
+  status      WebsiteStatus @default(DRAFT)
+  structure   Json?
+  settings    Json          @default("{}")
+  seoConfig   Json          @default("{}")
+  publishedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  pages       Page[]
+
+  @@unique([tenantId, slug])
+}
+
+model Page {
+  id             String   @id @default(cuid())
+  websiteId      String
+  website        Website  @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  title          String
+  slug           String
+  path           String
+  sections       Json?
+  seoTitle       String?
+  seoDescription String?
+  isHomepage     Boolean  @default(false)
+  isPublished    Boolean  @default(false)
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([websiteId, slug])
+}

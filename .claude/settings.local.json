@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la /d/code1/AI/webneed/*.tsx /d/code1/AI/webneed/*.ts /d/code1/AI/webneed/src/*.tsx)",
+      "Bash(find /d/code1/AI/webneed/backend/shared -type f -name *.ts)",
+      "Bash(find /d/code1/AI/webneed/backend -name prisma.schema -o -name *.prisma)",
+      "Bash(xargs ls:*)",
+      "Bash(grep -E \"\\\\.\\(ts|js\\)$\")",
+      "Bash(find /d/code1/AI/webneed/backend -name README* -o -name *.md)"
+    ]
+  }
+}
