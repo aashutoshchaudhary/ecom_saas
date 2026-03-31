@@ -33,6 +33,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/ta
 import { Separator } from "../../components/ui/separator";
 import { Switch } from "../../components/ui/switch";
 import { toast } from "sonner";
+import { dataProvider } from "../../lib/data-provider";
+import { useApiQuery } from "../../lib/hooks";
 
 export function Inventory() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -40,7 +42,10 @@ export function Inventory() {
   const [showVariantMatrix, setShowVariantMatrix] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
-  const filteredProducts = mockProducts.filter((product) => {
+  const { data: productsData } = useApiQuery(() => dataProvider.getProducts(), []);
+  const allProducts = productsData || mockProducts;
+
+  const filteredProducts = allProducts.filter((product: any) => {
     const matchesSearch = 
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.sku.toLowerCase().includes(searchQuery.toLowerCase());
@@ -51,28 +56,28 @@ export function Inventory() {
   const stats = [
     {
       label: "Total Products",
-      value: mockProducts.length,
+      value: allProducts.length,
       icon: Package,
       color: "text-blue-600 dark:text-blue-400",
       bgColor: "bg-blue-50 dark:bg-blue-900/20"
     },
     {
       label: "Low Stock",
-      value: mockProducts.filter(p => p.stock <= p.lowStockThreshold).length,
+      value: allProducts.filter(p => p.stock <= p.lowStockThreshold).length,
       icon: AlertTriangle,
       color: "text-yellow-600 dark:text-yellow-400",
       bgColor: "bg-yellow-50 dark:bg-yellow-900/20"
     },
     {
       label: "Total Value",
-      value: `$${mockProducts.reduce((sum, p) => sum + (p.price * p.stock), 0).toLocaleString()}`,
+      value: `$${allProducts.reduce((sum, p) => sum + (p.price * p.stock), 0).toLocaleString()}`,
       icon: DollarSign,
       color: "text-green-600 dark:text-green-400",
       bgColor: "bg-green-50 dark:bg-green-900/20"
     },
     {
       label: "Total Sales",
-      value: mockProducts.reduce((sum, p) => sum + p.sales, 0).toLocaleString(),
+      value: allProducts.reduce((sum, p) => sum + p.sales, 0).toLocaleString(),
       icon: TrendingUp,
       color: "text-purple-600 dark:text-purple-400",
       bgColor: "bg-purple-50 dark:bg-purple-900/20"
@@ -266,7 +271,7 @@ export function Inventory() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Grid3X3 className="w-5 h-5 text-purple-600" />
-                <CardTitle>Variant Matrix - {mockProducts.find(p => p.id === showVariantMatrix)?.name}</CardTitle>
+                <CardTitle>Variant Matrix - {allProducts.find(p => p.id === showVariantMatrix)?.name}</CardTitle>
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" className="gap-2" onClick={() => toast.success("Bulk changes saved!")}>

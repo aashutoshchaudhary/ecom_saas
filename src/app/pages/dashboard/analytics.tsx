@@ -5,12 +5,16 @@ import { Badge } from "../../components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
 import { mockAnalytics } from "../../lib/mock-data";
+import { dataProvider } from "../../lib/data-provider";
+import { useApiQuery } from "../../lib/hooks";
 import { BarChart3, TrendingUp, TrendingDown, DollarSign, ShoppingCart, Eye, Users, Download, Calendar, Sparkles } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { toast } from "sonner";
 
 export function Analytics() {
   const [dateRange, setDateRange] = useState("30d");
+  const { data: analyticsData } = useApiQuery(() => dataProvider.getAnalytics({ period: dateRange }), [dateRange]);
+  const analytics = analyticsData || mockAnalytics;
 
   const trafficSources = [
     { name: "Direct", value: 4500, color: "#8b5cf6" },
@@ -37,32 +41,32 @@ export function Analytics() {
   const stats = [
     {
       title: "Revenue",
-      value: `$${mockAnalytics.revenue.current.toLocaleString()}`,
-      change: mockAnalytics.revenue.change,
+      value: `$${analytics.revenue.current.toLocaleString()}`,
+      change: analytics.revenue.change,
       icon: DollarSign,
       trend: "up",
       color: "text-green-600 dark:text-green-400"
     },
     {
       title: "Orders",
-      value: mockAnalytics.orders.current.toLocaleString(),
-      change: mockAnalytics.orders.change,
+      value: analytics.orders.current.toLocaleString(),
+      change: analytics.orders.change,
       icon: ShoppingCart,
       trend: "up",
       color: "text-blue-600 dark:text-blue-400"
     },
     {
       title: "Visitors",
-      value: mockAnalytics.visitors.current.toLocaleString(),
-      change: mockAnalytics.visitors.change,
+      value: analytics.visitors.current.toLocaleString(),
+      change: analytics.visitors.change,
       icon: Eye,
       trend: "up",
       color: "text-purple-600 dark:text-purple-400"
     },
     {
       title: "Conversion",
-      value: `${mockAnalytics.conversion.current}%`,
-      change: mockAnalytics.conversion.change,
+      value: `${analytics.conversion.current}%`,
+      change: analytics.conversion.change,
       icon: Users,
       trend: "up",
       color: "text-orange-600 dark:text-orange-400"
@@ -141,7 +145,7 @@ export function Analytics() {
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={mockAnalytics.revenue.data}>
+                  <AreaChart data={analytics.revenue.data}>
                     <defs>
                       <linearGradient id="revenue" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
@@ -193,7 +197,7 @@ export function Analytics() {
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={mockAnalytics.orders.data}>
+                  <BarChart data={analytics.orders.data}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="date" stroke="#6b7280" fontSize={12} />
                     <YAxis stroke="#6b7280" fontSize={12} />
@@ -211,7 +215,7 @@ export function Analytics() {
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={mockAnalytics.visitors.data}>
+                  <LineChart data={analytics.visitors.data}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="date" stroke="#6b7280" fontSize={12} />
                     <YAxis stroke="#6b7280" fontSize={12} />

@@ -2,11 +2,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/ca
 import { Badge } from "../../components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "../../components/ui/avatar";
 import { mockCustomers, statusColors } from "../../lib/mock-data";
+import { dataProvider } from "../../lib/data-provider";
+import { useApiQuery } from "../../lib/hooks";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
 import { Button } from "../../components/ui/button";
 import { Mail, Phone } from "lucide-react";
 
 export function Customers() {
+  const { data: customersData } = useApiQuery(() => dataProvider.getCustomers(), []);
+  const allCustomers = customersData || mockCustomers;
+
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
       <div>
@@ -16,7 +21,7 @@ export function Customers() {
 
       <Card>
         <CardHeader>
-          <CardTitle>All Customers ({mockCustomers.length})</CardTitle>
+          <CardTitle>All Customers ({allCustomers.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -31,7 +36,7 @@ export function Customers() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockCustomers.map((customer) => (
+              {allCustomers.map((customer) => (
                 <TableRow key={customer.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">

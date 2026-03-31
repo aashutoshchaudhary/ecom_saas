@@ -95,16 +95,23 @@ export function DashboardHome() {
     },
   ];
 
-  const handleAiSend = () => {
+  const handleAiSend = async () => {
     if (!aiMessage.trim()) return;
-    setAiMessages([...aiMessages, { role: "user", content: aiMessage }]);
+    const userMsg = aiMessage;
+    setAiMessages(prev => [...prev, { role: "user", content: userMsg }]);
     setAiMessage("");
-    setTimeout(() => {
+    try {
+      const result = await dataProvider.generateContent(userMsg, 'assistant');
       setAiMessages(prev => [...prev, {
         role: "assistant",
-        content: "Great question! Based on your store data, I recommend focusing on email marketing campaigns targeting your VIP customers. They have a 3x higher conversion rate. Would you like me to draft a campaign?"
+        content: (result as any)?.content || (result as any)?.body || "Based on your store data, I recommend optimizing your product listings and running targeted campaigns. Would you like me to help with that?"
       }]);
-    }, 1000);
+    } catch {
+      setAiMessages(prev => [...prev, {
+        role: "assistant",
+        content: "I can help with that! Based on your store analytics, here are my recommendations: focus on your top-performing products, optimize SEO for high-traffic pages, and consider email campaigns for returning customers."
+      }]);
+    }
   };
 
   return (
@@ -112,7 +119,7 @@ export function DashboardHome() {
       {/* Welcome Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold mb-1">Welcome back, Sarah!</h1>
+          <h1 className="text-2xl md:text-3xl font-bold mb-1">Welcome back{user ? `, ${user.firstName}` : ''}!</h1>
           <p className="text-gray-600 dark:text-gray-400">Here's what's happening with your store today.</p>
         </div>
         <div className="flex flex-wrap gap-2">

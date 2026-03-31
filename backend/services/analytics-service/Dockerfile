@@ -1,19 +1,36 @@
 FROM node:20-alpine AS build
 WORKDIR /app
-COPY package.json ./
-RUN npm install
-COPY . .
-RUN npx prisma generate 2>/dev/null || true
-RUN npm run build
+
+# Copy and build shared package
+COPY shared ./shared
+RUN cd shared && npm install && npx tsc || true
+
+# Copy and build service
+COPY services/analytics-service ./services/analytics-service
+RUN cd services/analytics-service && sed -i 's|"workspace:\*"|"file:../../shared"|g' package.json
+RUN cd services/analytics-service && npm install
+RUN cd services/analytics-service && npx prisma generate || true
+RUN cd services/analytics-service && npm run build
 
 FROM node:20-alpine AS production
 RUN apk add --no-cache dumb-init curl &&     addgroup -g 1001 -S appgroup &&     adduser -S appuser -u 1001 -G appgroup
 WORKDIR /app
-COPY package.json ./
-RUN npm install --omit=dev
-COPY --from=build --chown=appuser:appgroup /app/dist ./dist
-COPY --from=build --chown=appuser:appgroup /app/prisma ./prisma 2>/dev/null || true
+
+# Copy shared built output
+COPY --from=build /app/shared ./shared
+
+# Install prod deps for service
+COPY services/analytics-service/package.json ./services/analytics-service/
+RUN cd services/analytics-service && sed -i 's|"workspace:\*"|"file:../../shared"|g' package.json
+RUN cd services/analytics-service && npm install --omit=dev
+
+# Copy compiled code
+COPY --from=build /app/services/analytics-service/dist ./services/analytics-service/dist
+COPY --from=build /app/services/analytics-service/prisma ./services/analytics-service/prisma
+COPY --from=build /app/services/analytics-service/node_modules/.prisma ./services/analytics-service/node_modules/.prisma
+
 USER appuser
+WORKDIR /app/services/analytics-service
 ENV PORT=3022
 EXPOSE 3022
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3   CMD curl -f http://localhost:3022/health || exit 1

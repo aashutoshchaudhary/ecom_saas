@@ -18,3 +18,4 @@ router.get('/traffic-sources', validate(getTrafficSourcesSchema), analyticsContr
 router.get('/top-products', validate(getTopProductsSchema), analyticsController.getTopProducts.bind(analyticsController));
 
 export default router;
+export { router };

@@ -23,10 +23,14 @@ import {
   Zap,
 } from "lucide-react";
 import { mockSeoData } from "../../lib/mock-data";
+import { dataProvider } from "../../lib/data-provider";
+import { useApiQuery } from "../../lib/hooks";
 import { toast } from "sonner";
 
 export function SEO() {
-  const [selectedPage, setSelectedPage] = useState(mockSeoData.pages[0]);
+  const { data: seoDataResult } = useApiQuery(() => dataProvider.getSeoData(), []);
+  const seoData = seoDataResult || mockSeoData;
+  const [selectedPage, setSelectedPage] = useState(seoData.pages[0]);
 
   const scoreColor = (score: number) => {
     if (score >= 80) return "text-green-600";
@@ -91,22 +95,22 @@ export function SEO() {
                 <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" strokeWidth="8" />
                 <circle
                   cx="50" cy="50" r="45" fill="none"
-                  stroke={mockSeoData.score >= 80 ? "#22c55e" : mockSeoData.score >= 60 ? "#eab308" : "#ef4444"}
+                  stroke={seoData.score >= 80 ? "#22c55e" : seoData.score >= 60 ? "#eab308" : "#ef4444"}
                   strokeWidth="8" strokeLinecap="round"
-                  strokeDasharray={`${mockSeoData.score * 2.83} 283`}
+                  strokeDasharray={`${seoData.score * 2.83} 283`}
                   transform="rotate(-90 50 50)"
                 />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
                 <div>
-                  <p className={`text-3xl font-bold ${scoreColor(mockSeoData.score)}`}>{mockSeoData.score}</p>
+                  <p className={`text-3xl font-bold ${scoreColor(seoData.score)}`}>{seoData.score}</p>
                   <p className="text-xs text-gray-500">/ 100</p>
                 </div>
               </div>
             </div>
             <p className="font-semibold">Overall SEO Score</p>
             <p className="text-sm text-gray-500 mt-1">
-              {mockSeoData.score >= 80 ? "Great!" : mockSeoData.score >= 60 ? "Needs Improvement" : "Critical Issues"}
+              {seoData.score >= 80 ? "Great!" : seoData.score >= 60 ? "Needs Improvement" : "Critical Issues"}
             </p>
           </CardContent>
         </Card>
@@ -117,7 +121,7 @@ export function SEO() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {mockSeoData.suggestions.map((suggestion, idx) => (
+              {seoData.suggestions.map((suggestion, idx) => (
                 <div
                   key={idx}
                   className="flex items-start justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
@@ -158,7 +162,7 @@ export function SEO() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {mockSeoData.pages.map((page) => (
+                {seoData.pages.map((page) => (
                   <div
                     key={page.path}
                     onClick={() => setSelectedPage(page)}

@@ -31,12 +31,17 @@ import {
 import { Avatar, AvatarImage, AvatarFallback } from "../../components/ui/avatar";
 import { mockOrders, statusColors } from "../../lib/mock-data";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
+import { dataProvider } from "../../lib/data-provider";
+import { useApiQuery } from "../../lib/hooks";
 
 export function Orders() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const filteredOrders = mockOrders.filter((order) => {
+  const { data: ordersData } = useApiQuery(() => dataProvider.getOrders(), []);
+  const allOrders = ordersData || mockOrders;
+
+  const filteredOrders = allOrders.filter((order: any) => {
     const matchesSearch = 
       order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -50,28 +55,28 @@ export function Orders() {
   const stats = [
     {
       label: "Total Orders",
-      value: mockOrders.length,
+      value: allOrders.length,
       icon: ShoppingBag,
       color: "text-blue-600 dark:text-blue-400",
       bgColor: "bg-blue-50 dark:bg-blue-900/20"
     },
     {
       label: "Pending",
-      value: mockOrders.filter(o => o.status === "pending").length,
+      value: allOrders.filter(o => o.status === "pending").length,
       icon: Calendar,
       color: "text-yellow-600 dark:text-yellow-400",
       bgColor: "bg-yellow-50 dark:bg-yellow-900/20"
     },
     {
       label: "Total Revenue",
-      value: `$${mockOrders.reduce((sum, o) => sum + o.total, 0).toFixed(2)}`,
+      value: `$${allOrders.reduce((sum, o) => sum + o.total, 0).toFixed(2)}`,
       icon: DollarSign,
       color: "text-green-600 dark:text-green-400",
       bgColor: "bg-green-50 dark:bg-green-900/20"
     },
     {
       label: "Avg Order Value",
-      value: `$${(mockOrders.reduce((sum, o) => sum + o.total, 0) / mockOrders.length).toFixed(2)}`,
+      value: `$${(allOrders.reduce((sum, o) => sum + o.total, 0) / allOrders.length).toFixed(2)}`,
       icon: TrendingUp,
       color: "text-purple-600 dark:text-purple-400",
       bgColor: "bg-purple-50 dark:bg-purple-900/20"

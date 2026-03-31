@@ -24,9 +24,15 @@ import {
   HardDrive,
 } from "lucide-react";
 import { mockDomains, mockEmails } from "../../lib/mock-data";
+import { dataProvider } from "../../lib/data-provider";
+import { useApiQuery } from "../../lib/hooks";
 import { toast } from "sonner";
 
 export function Domains() {
+  const { data: domainsData } = useApiQuery(() => dataProvider.getDomains(), []);
+  const { data: emailsData } = useApiQuery(() => dataProvider.getEmails(), []);
+  const allDomains = domainsData || mockDomains;
+  const allEmails = emailsData || mockEmails;
   const [searchDomain, setSearchDomain] = useState("");
   const [searchResults, setSearchResults] = useState<{ domain: string; available: boolean; price: string }[]>([]);
 
@@ -79,7 +85,7 @@ export function Domains() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Domains</p>
-                <p className="text-3xl font-bold">{mockDomains.length}</p>
+                <p className="text-3xl font-bold">{allDomains.length}</p>
               </div>
               <Globe className="w-8 h-8 text-blue-500" />
             </div>
@@ -90,7 +96,7 @@ export function Domains() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Email Accounts</p>
-                <p className="text-3xl font-bold">{mockEmails.length}</p>
+                <p className="text-3xl font-bold">{allEmails.length}</p>
               </div>
               <Mail className="w-8 h-8 text-purple-500" />
             </div>
@@ -101,7 +107,7 @@ export function Domains() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">SSL Active</p>
-                <p className="text-3xl font-bold">{mockDomains.filter(d => d.ssl).length}</p>
+                <p className="text-3xl font-bold">{allDomains.filter(d => d.ssl).length}</p>
               </div>
               <Shield className="w-8 h-8 text-green-500" />
             </div>
@@ -112,7 +118,7 @@ export function Domains() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Unread Emails</p>
-                <p className="text-3xl font-bold">{mockEmails.reduce((s, e) => s + e.unread, 0)}</p>
+                <p className="text-3xl font-bold">{allEmails.reduce((s, e) => s + e.unread, 0)}</p>
               </div>
               <Inbox className="w-8 h-8 text-orange-500" />
             </div>
@@ -167,7 +173,7 @@ export function Domains() {
             </Dialog>
           </div>
 
-          {mockDomains.map((domain) => (
+          {allDomains.map((domain) => (
             <Card key={domain.id}>
               <CardContent className="p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -268,7 +274,7 @@ export function Domains() {
             </Dialog>
           </div>
 
-          {mockEmails.map((email) => (
+          {allEmails.map((email) => (
             <Card key={email.id}>
               <CardContent className="p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

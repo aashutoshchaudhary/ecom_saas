@@ -3,7 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import { errorHandler, requestLogger } from '@siteforge/shared';
-import { router } from './routes/analytic.routes';
+import router from './routes/analytics.routes';
 
 dotenv.config();
 

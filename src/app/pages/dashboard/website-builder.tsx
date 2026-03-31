@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { Card } from "../../components/ui/card";
@@ -36,6 +36,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../
 import { toast } from "sonner";
 import { builderSections, colorSchemes, industryPlugins } from "../../lib/builder-data";
 import { mockAiVersions } from "../../lib/mock-data";
+import { websitesApi } from "../../lib/api/websites";
+import { aiApi } from "../../lib/api/ai";
+import { dataProvider } from "../../lib/data-provider";
 import { sectionComponents } from "../../components/builder/section-components";
 import { elementTypes, elementCategories, RenderElement } from "../../components/builder/element-types";
 import { ElementProperties } from "../../components/builder/element-properties";
@@ -175,6 +178,13 @@ export function WebsiteBuilder() {
   const [redoStack, setRedoStack] = useState<PageDef[][]>([]);
   const [selectedColorScheme, setSelectedColorScheme] = useState(colorSchemes[0]);
   const [aiPrompt, setAiPrompt] = useState("");
+  const [websiteId, setWebsiteId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [dirty, setDirty] = useState(false);
 
   // Pages
   const [pages, setPages] = useState<PageDef[]>([
@@ -186,6 +196,58 @@ export function WebsiteBuilder() {
   ]);
   const [selectedPageId, setSelectedPageId] = useState("home");
   const currentPage = pages.find(p => p.id === selectedPageId) || pages[0];
+
+  // Load website from backend on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const website = await dataProvider.getWebsite();
+        if (website && website.id) {
+          setWebsiteId(website.id);
+          // Load pages from backend
+          try {
+            const pagesRes = await websitesApi.listPages(website.id);
+            if (pagesRes?.data?.length) {
+              const loaded: PageDef[] = pagesRes.data.map((p: any) => ({
+                id: p.id,
+                name: p.title,
+                path: p.path || `/${p.slug}`,
+                sections: p.sections || [],
+                isHome: p.isHomepage,
+              }));
+              setPages(loaded);
+              const home = loaded.find(p => p.isHome);
+              if (home) setSelectedPageId(home.id);
+            }
+          } catch {}
+          // Load structure if pages are embedded
+          if (website.structure?.pages) {
+            const loaded: PageDef[] = website.structure.pages.map((p: any, i: number) => ({
+              id: p.id || `page-${i}`,
+              name: p.name,
+              path: p.slug || p.path || '/',
+              sections: p.sections || [],
+              isHome: p.isHome || i === 0,
+            }));
+            if (loaded.length > 0 && loaded[0].sections.length > 0) {
+              setPages(loaded);
+              setSelectedPageId(loaded[0].id);
+            }
+          }
+        }
+      } catch {}
+    })();
+  }, []);
+
+  // Auto-save every 30 seconds when dirty
+  useEffect(() => {
+    if (!dirty || !websiteId) return;
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(() => {
+      handleSave(true);
+    }, 30000);
+    return () => { if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current); };
+  }, [dirty, pages, websiteId]);
 
   // Selection
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
@@ -220,6 +282,7 @@ export function WebsiteBuilder() {
   const updateCurrentPage = (updater: (page: PageDef) => PageDef) => {
     pushUndo();
     setPages(pages.map(p => p.id === selectedPageId ? updater(p) : p));
+    setDirty(true);
   };
 
   const addSection = (sectionDef: typeof builderSections[0]) => {
@@ -389,8 +452,91 @@ export function WebsiteBuilder() {
     toast.success("Page deleted");
   };
 
-  const handleSave = () => toast.success("Website saved successfully!");
-  const handlePublish = () => toast.success("Website published successfully!");
+  const handleSave = useCallback(async (auto = false) => {
+    setSaving(true);
+    try {
+      if (websiteId) {
+        const structure = { pages: pages.map(p => ({ id: p.id, name: p.name, slug: p.path, isHome: p.isHome, sections: p.sections })) };
+        await websitesApi.updateStructure(websiteId, structure);
+        // Also save each page's sections individually
+        for (const page of pages) {
+          try { await websitesApi.updatePageSections(websiteId, page.id, page.sections); } catch {}
+        }
+      } else {
+        // Create a new website if none exists
+        const website = await websitesApi.create({ name: 'My Website' });
+        setWebsiteId(website.id);
+        const structure = { pages: pages.map(p => ({ id: p.id, name: p.name, slug: p.path, isHome: p.isHome, sections: p.sections })) };
+        await websitesApi.updateStructure(website.id, structure);
+      }
+      setDirty(false);
+      setLastSaved(new Date());
+      toast.success(auto ? "Auto-saved" : "Website saved successfully!");
+    } catch (err) {
+      // Save locally as fallback
+      try { localStorage.setItem('sf_builder_pages', JSON.stringify(pages)); } catch {}
+      if (!auto) toast.success("Saved locally (backend unavailable)");
+    } finally {
+      setSaving(false);
+    }
+  }, [websiteId, pages]);
+
+  const handlePublish = useCallback(async () => {
+    setPublishing(true);
+    try {
+      if (!websiteId) await handleSave();
+      if (websiteId) {
+        await websitesApi.publish(websiteId);
+        toast.success("Website published successfully!");
+      }
+    } catch {
+      toast.error("Publish failed. Please try again.");
+    } finally {
+      setPublishing(false);
+    }
+  }, [websiteId, handleSave]);
+
+  const handleAiGenerate = useCallback(async () => {
+    if (!aiPrompt.trim()) return;
+    setAiGenerating(true);
+    try {
+      const result = await aiApi.generateWebsite({
+        businessName: aiPrompt,
+        industry: 'general',
+        description: aiPrompt,
+        goals: 'Create a professional website',
+      });
+      if (result && (result as any).pages) {
+        const genPages: PageDef[] = (result as any).pages.map((p: any, i: number) => ({
+          id: p.id || `gen-${Date.now()}-${i}`,
+          name: p.name,
+          path: p.slug || '/',
+          sections: (p.sections || []).map((s: any) => ({
+            id: s.id || `section-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+            type: s.type || 'hero',
+            component: s.component || 'HeroGradient',
+            props: s.props || {},
+            visible: true,
+            elements: [],
+          })),
+          isHome: p.isHome || i === 0,
+        }));
+        if (genPages.length > 0) {
+          pushUndo();
+          setPages(genPages);
+          setSelectedPageId(genPages[0].id);
+          setDirty(true);
+          toast.success("AI generated your website! Review and customize.");
+        }
+      }
+      setShowAiAssistant(false);
+      setAiPrompt("");
+    } catch {
+      toast.error("AI generation failed. Try again or build manually.");
+    } finally {
+      setAiGenerating(false);
+    }
+  }, [aiPrompt]);
 
   const viewModeWidths: Record<string, string> = {
     desktop: "w-full",
@@ -525,12 +671,13 @@ export function WebsiteBuilder() {
               <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs">
                 <Eye className="w-3.5 h-3.5" /> Preview
               </Button>
-              <Button size="sm" onClick={handleSave} className="h-8 gap-1.5 text-xs">
-                <Save className="w-3.5 h-3.5" /> Save
+              <Button size="sm" onClick={() => handleSave()} disabled={saving} className="h-8 gap-1.5 text-xs">
+                <Save className="w-3.5 h-3.5" /> {saving ? 'Saving...' : dirty ? 'Save*' : 'Saved'}
               </Button>
-              <Button size="sm" onClick={handlePublish} className="h-8 gap-1.5 text-xs bg-gradient-to-r from-purple-600 to-blue-600 hidden md:flex">
-                Publish
+              <Button size="sm" onClick={handlePublish} disabled={publishing} className="h-8 gap-1.5 text-xs bg-gradient-to-r from-purple-600 to-blue-600 hidden md:flex">
+                {publishing ? 'Publishing...' : 'Publish'}
               </Button>
+              {lastSaved && <span className="text-[10px] text-gray-400 hidden lg:block">Last saved: {lastSaved.toLocaleTimeString()}</span>}
 
               <Separator orientation="vertical" className="h-5" />
 
@@ -1128,14 +1275,11 @@ export function WebsiteBuilder() {
                           value={aiPrompt}
                           onChange={(e) => setAiPrompt(e.target.value)}
                           onKeyDown={(e) => {
-                            if (e.key === 'Enter' && aiPrompt.trim()) {
-                              toast.success(`AI processing: "${aiPrompt}" (10 credits)`);
-                              setAiPrompt("");
-                            }
+                            if (e.key === 'Enter' && aiPrompt.trim()) handleAiGenerate();
                           }}
                         />
-                        <Button size="sm" className="h-8 w-8 p-0">
-                          <Sparkles className="w-3.5 h-3.5" />
+                        <Button size="sm" className="h-8 w-8 p-0" onClick={handleAiGenerate} disabled={aiGenerating}>
+                          {aiGenerating ? <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
                         </Button>
                       </div>
                     </div>

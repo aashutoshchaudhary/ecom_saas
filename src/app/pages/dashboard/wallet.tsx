@@ -23,12 +23,16 @@ import {
   Crown,
 } from "lucide-react";
 import { mockWallet, mockUser } from "../../lib/mock-data";
+import { dataProvider } from "../../lib/data-provider";
+import { useApiQuery } from "../../lib/hooks";
 import { toast } from "sonner";
 
 export function Wallet() {
-  const [autoTopUp, setAutoTopUp] = useState(mockWallet.autoTopUp);
+  const { data: walletData } = useApiQuery(() => dataProvider.getWallet(), []);
+  const wallet = walletData || mockWallet;
+  const [autoTopUp, setAutoTopUp] = useState(wallet.autoTopUp);
 
-  const usagePercentage = (mockWallet.totalUsed / mockWallet.totalPurchased) * 100;
+  const usagePercentage = (wallet.totalUsed / wallet.totalPurchased) * 100;
 
   const handlePurchase = (packName: string) => {
     toast.success(`${packName} purchased successfully! Credits added to your wallet.`);
@@ -59,7 +63,7 @@ export function Wallet() {
               <DialogTitle>Purchase Credit Packs</DialogTitle>
             </DialogHeader>
             <div className="grid md:grid-cols-2 gap-4 mt-4">
-              {mockWallet.pricing.map((pack) => (
+              {wallet.pricing.map((pack) => (
                 <Card
                   key={pack.id}
                   className={`relative cursor-pointer hover:shadow-lg transition-shadow ${
@@ -105,7 +109,7 @@ export function Wallet() {
               <p className="text-sm opacity-90">Available Credits</p>
               <Coins className="w-6 h-6 opacity-80" />
             </div>
-            <p className="text-4xl font-bold">{mockWallet.balance.toLocaleString()}</p>
+            <p className="text-4xl font-bold">{wallet.balance.toLocaleString()}</p>
             <div className="mt-3 flex items-center gap-2">
               <Badge className="bg-white/20 text-white border-0">
                 <Crown className="w-3 h-3 mr-1" />
@@ -121,7 +125,7 @@ export function Wallet() {
               <p className="text-sm text-gray-600 dark:text-gray-400">Total Purchased</p>
               <ArrowDownLeft className="w-5 h-5 text-green-500" />
             </div>
-            <p className="text-3xl font-bold">{mockWallet.totalPurchased.toLocaleString()}</p>
+            <p className="text-3xl font-bold">{wallet.totalPurchased.toLocaleString()}</p>
             <p className="text-sm text-green-600 mt-1">+5,000 this month</p>
           </CardContent>
         </Card>
@@ -132,7 +136,7 @@ export function Wallet() {
               <p className="text-sm text-gray-600 dark:text-gray-400">Total Used</p>
               <ArrowUpRight className="w-5 h-5 text-orange-500" />
             </div>
-            <p className="text-3xl font-bold">{mockWallet.totalUsed.toLocaleString()}</p>
+            <p className="text-3xl font-bold">{wallet.totalUsed.toLocaleString()}</p>
             <p className="text-sm text-orange-600 mt-1">-525 this month</p>
           </CardContent>
         </Card>
@@ -172,7 +176,7 @@ export function Wallet() {
                   { name: "Premium Features", used: 1150, icon: Crown, color: "bg-pink-500" },
                 ].map((item) => {
                   const Icon = item.icon;
-                  const pct = (item.used / mockWallet.totalUsed) * 100;
+                  const pct = (item.used / wallet.totalUsed) * 100;
                   return (
                     <div key={item.name} className="flex items-center gap-4">
                       <div className={`w-8 h-8 rounded-lg ${item.color} flex items-center justify-center`}>
@@ -195,7 +199,7 @@ export function Wallet() {
           </Card>
 
           {/* Transaction History */}
-          {mockWallet.history.map((tx) => (
+          {wallet.history.map((tx) => (
             <Card key={tx.id}>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -235,7 +239,7 @@ export function Wallet() {
 
         <TabsContent value="pricing" className="mt-6">
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {mockWallet.pricing.map((pack) => (
+            {wallet.pricing.map((pack) => (
               <Card key={pack.id} className={`relative ${pack.popular ? "ring-2 ring-purple-600" : ""}`}>
                 {pack.popular && (
                   <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-gradient-to-r from-purple-600 to-blue-600">
@@ -286,12 +290,12 @@ export function Wallet() {
                   <div>
                     <Label>Top-Up Threshold</Label>
                     <p className="text-sm text-gray-500 mb-2">Trigger top-up when credits fall below</p>
-                    <Input type="number" defaultValue={mockWallet.autoTopUpThreshold} />
+                    <Input type="number" defaultValue={wallet.autoTopUpThreshold} />
                   </div>
                   <div>
                     <Label>Top-Up Amount</Label>
                     <p className="text-sm text-gray-500 mb-2">Number of credits to purchase</p>
-                    <Input type="number" defaultValue={mockWallet.autoTopUpAmount} />
+                    <Input type="number" defaultValue={wallet.autoTopUpAmount} />
                   </div>
                 </>
               )}
