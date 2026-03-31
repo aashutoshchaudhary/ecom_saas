@@ -12,10 +12,10 @@ import {
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import { Badge } from "./ui/badge";
 import { useTheme } from "./theme-provider";
-import { mockUser } from "../lib/mock-data";
+import { useAuth } from "../lib/auth-context";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 import { useState } from "react";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { 
   LayoutDashboard, 
   ShoppingBag, 
@@ -49,9 +49,21 @@ const mobileNavItems = [
 
 export function Header() {
   const { theme, setTheme } = useTheme();
+  const { user, tenant, logout } = useAuth();
+  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeIndustry, setActiveIndustry] = useState(mockUser.industries[0]);
   const location = useLocation();
+
+  const userName = user ? `${user.firstName} ${user.lastName}`.trim() : "User";
+  const userEmail = user?.email || "";
+  const userAvatar = user?.avatar || "";
+  const userInitial = userName.charAt(0).toUpperCase();
+  const planName = tenant?.subscription || "FREE";
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/auth");
+  };
 
   return (
     <header className="h-16 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-4 md:px-6">
@@ -100,40 +112,34 @@ export function Header() {
           </SheetContent>
         </Sheet>
 
-        {/* Industry Switcher */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2 hidden sm:flex">
-              <span className="text-base">{activeIndustry.icon}</span>
-              <span className="max-w-[120px] truncate">{activeIndustry.name}</span>
-              <ChevronDown className="w-3 h-3 opacity-50" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-64">
-            <DropdownMenuLabel>Switch Business</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {mockUser.industries.map((ind) => (
-              <DropdownMenuItem
-                key={ind.id}
-                onClick={() => setActiveIndustry(ind)}
-                className={activeIndustry.id === ind.id ? "bg-purple-50 dark:bg-purple-900/20" : ""}
-              >
-                <span className="text-lg mr-3">{ind.icon}</span>
+        {/* Business Switcher */}
+        {tenant && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2 hidden sm:flex">
+                <Globe className="w-4 h-4 text-purple-600" />
+                <span className="max-w-[120px] truncate">{tenant.name}</span>
+                <ChevronDown className="w-3 h-3 opacity-50" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-64">
+              <DropdownMenuLabel>Current Business</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="bg-purple-50 dark:bg-purple-900/20">
+                <Globe className="w-4 h-4 mr-3 text-purple-600" />
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm">{ind.name}</p>
-                  <p className="text-xs text-gray-500">{ind.type}</p>
+                  <p className="font-medium text-sm">{tenant.name}</p>
+                  <p className="text-xs text-gray-500 capitalize">{tenant.subscription.toLowerCase()} plan</p>
                 </div>
-                {activeIndustry.id === ind.id && (
-                  <Badge variant="secondary" className="text-xs ml-2">Active</Badge>
-                )}
+                <Badge variant="secondary" className="text-xs ml-2">Active</Badge>
               </DropdownMenuItem>
-            ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <span className="text-gray-500 text-sm">+ Add New Business</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <span className="text-gray-500 text-sm">+ Add New Business</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
 
         {/* Search */}
         <div className="hidden md:block relative flex-1 max-w-md">
@@ -151,8 +157,7 @@ export function Header() {
         <Link to="/dashboard/wallet">
           <Button variant="outline" size="sm" className="gap-2 hidden sm:flex">
             <Coins className="w-4 h-4 text-purple-600" />
-            <span className="font-semibold">{mockUser.credits.toLocaleString()}</span>
-            <span className="text-gray-500 text-xs">credits</span>
+            <span className="text-gray-500 text-xs">Wallet</span>
           </Button>
         </Link>
 
@@ -222,22 +227,17 @@ export function Header() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-9 w-9 rounded-full">
               <Avatar className="h-9 w-9">
-                <AvatarImage src={mockUser.avatar} alt={mockUser.name} />
-                <AvatarFallback>{mockUser.name.charAt(0)}</AvatarFallback>
+                <AvatarImage src={userAvatar} alt={userName} />
+                <AvatarFallback>{userInitial}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium">{mockUser.name}</p>
-                <p className="text-xs text-gray-500">{mockUser.email}</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="secondary" className="text-xs">{mockUser.plan} Plan</Badge>
-                  <span className="text-xs text-gray-500 flex items-center gap-1">
-                    <Coins className="w-3 h-3" /> {mockUser.credits.toLocaleString()}
-                  </span>
-                </div>
+                <p className="text-sm font-medium">{userName}</p>
+                <p className="text-xs text-gray-500">{userEmail}</p>
+                <Badge variant="secondary" className="text-xs w-fit mt-1">{planName} Plan</Badge>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
@@ -254,7 +254,7 @@ export function Header() {
               Support
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-600">
+            <DropdownMenuItem className="text-red-600" onClick={handleLogout}>
               Logout
             </DropdownMenuItem>
           </DropdownMenuContent>

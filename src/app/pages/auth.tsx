@@ -1,26 +1,88 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-import { Sparkles, Mail, Lock, User, ArrowLeft } from "lucide-react";
+import { Sparkles, Mail, Lock, User, ArrowLeft, Loader2, AlertCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Checkbox } from "../components/ui/checkbox";
+import { useAuth } from "../lib/auth-context";
 
 export function AuthPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const plan = searchParams.get("plan");
+  const billing = searchParams.get("billing");
+
+  const { login, register, verifyMfa, error: authError, clearError } = useAuth();
+
   const [showMFA, setShowMFA] = useState(false);
+  const [mfaUserId, setMfaUserId] = useState("");
+  const [mfaCode, setMfaCode] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleAuth = (e: React.FormEvent) => {
+  const [loginData, setLoginData] = useState({ email: "", password: "" });
+  const [signupData, setSignupData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+  });
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate authentication
-    navigate("/onboarding");
+    setError(null);
+    setLoading(true);
+    try {
+      const result = await login(loginData);
+      if (result?.mfaRequired) {
+        setMfaUserId((result as any).userId);
+        setShowMFA(true);
+      } else {
+        navigate(plan ? `/checkout?plan=${plan}&billing=${billing || "monthly"}` : "/dashboard");
+      }
+    } catch (err: any) {
+      setError(err.message || "Login failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleMFASubmit = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate("/dashboard");
+    setError(null);
+    setLoading(true);
+    try {
+      await register(signupData);
+      // After signup, redirect to onboarding or checkout
+      if (plan) {
+        navigate(`/checkout?plan=${plan}&billing=${billing || "monthly"}`);
+      } else {
+        navigate("/onboarding");
+      }
+    } catch (err: any) {
+      setError(err.message || "Registration failed");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleMFASubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      await verifyMfa(mfaUserId, mfaCode);
+      navigate("/dashboard");
+    } catch (err: any) {
+      setError(err.message || "Invalid code");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const displayError = error || authError;
 
   if (showMFA) {
     return (
@@ -33,29 +95,44 @@ export function AuthPage() {
               </div>
               <h2 className="text-2xl font-bold mb-2">Two-Factor Authentication</h2>
               <p className="text-gray-600 dark:text-gray-400">
-                Enter the verification code sent to your email
+                Enter the 6-digit code from your authenticator app
               </p>
             </div>
+
+            {displayError && (
+              <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center gap-2 text-sm text-red-700 dark:text-red-400">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                {displayError}
+              </div>
+            )}
 
             <form onSubmit={handleMFASubmit} className="space-y-6">
               <div>
                 <Label>Verification Code</Label>
-                <Input 
-                  type="text" 
-                  placeholder="000000" 
+                <Input
+                  type="text"
+                  placeholder="000000"
                   className="text-center text-2xl tracking-widest"
                   maxLength={6}
+                  value={mfaCode}
+                  onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ""))}
+                  autoFocus
                 />
               </div>
 
-              <Button type="submit" className="w-full bg-gradient-to-r from-purple-600 to-blue-600">
+              <Button
+                type="submit"
+                className="w-full bg-gradient-to-r from-purple-600 to-blue-600"
+                disabled={loading || mfaCode.length !== 6}
+              >
+                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                 Verify & Continue
               </Button>
 
               <div className="text-center">
                 <button
                   type="button"
-                  onClick={() => setShowMFA(false)}
+                  onClick={() => { setShowMFA(false); clearError(); setError(null); }}
                   className="text-sm text-purple-600 dark:text-purple-400 hover:underline"
                 >
                   Back to login
@@ -91,24 +168,33 @@ export function AuthPage() {
             </p>
           </div>
 
-          <Tabs defaultValue="login" className="w-full">
+          {displayError && (
+            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center gap-2 text-sm text-red-700 dark:text-red-400">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              {displayError}
+            </div>
+          )}
+
+          <Tabs defaultValue="login" className="w-full" onValueChange={() => { setError(null); clearError(); }}>
             <TabsList className="grid w-full grid-cols-2 mb-8">
               <TabsTrigger value="login">Login</TabsTrigger>
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
             </TabsList>
 
             <TabsContent value="login">
-              <form onSubmit={handleAuth} className="space-y-4">
+              <form onSubmit={handleLogin} className="space-y-4">
                 <div>
                   <Label htmlFor="email">Email</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <Input 
-                      id="email" 
-                      type="email" 
-                      placeholder="you@example.com" 
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="you@example.com"
                       className="pl-9"
-                      defaultValue="sarah@example.com"
+                      value={loginData.email}
+                      onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                      required
                     />
                   </div>
                 </div>
@@ -117,12 +203,14 @@ export function AuthPage() {
                   <Label htmlFor="password">Password</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <Input 
-                      id="password" 
-                      type="password" 
-                      placeholder="••••••••" 
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="••••••••"
                       className="pl-9"
-                      defaultValue="password"
+                      value={loginData.password}
+                      onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                      required
                     />
                   </div>
                 </div>
@@ -139,7 +227,12 @@ export function AuthPage() {
                   </a>
                 </div>
 
-                <Button type="submit" className="w-full bg-gradient-to-r from-purple-600 to-blue-600">
+                <Button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600"
+                  disabled={loading}
+                >
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                   Sign In
                 </Button>
 
@@ -173,16 +266,31 @@ export function AuthPage() {
             </TabsContent>
 
             <TabsContent value="signup">
-              <form onSubmit={handleAuth} className="space-y-4">
-                <div>
-                  <Label htmlFor="signup-name">Full Name</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <Input 
-                      id="signup-name" 
-                      type="text" 
-                      placeholder="John Doe" 
-                      className="pl-9"
+              <form onSubmit={handleSignup} className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="signup-first">First Name</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Input
+                        id="signup-first"
+                        type="text"
+                        placeholder="John"
+                        className="pl-9"
+                        value={signupData.firstName}
+                        onChange={(e) => setSignupData({ ...signupData, firstName: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="signup-last">Last Name</Label>
+                    <Input
+                      id="signup-last"
+                      type="text"
+                      placeholder="Doe"
+                      value={signupData.lastName}
+                      onChange={(e) => setSignupData({ ...signupData, lastName: e.target.value })}
                     />
                   </div>
                 </div>
@@ -191,11 +299,14 @@ export function AuthPage() {
                   <Label htmlFor="signup-email">Email</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <Input 
-                      id="signup-email" 
-                      type="email" 
-                      placeholder="you@example.com" 
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      placeholder="you@example.com"
                       className="pl-9"
+                      value={signupData.email}
+                      onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
+                      required
                     />
                   </div>
                 </div>
@@ -204,23 +315,32 @@ export function AuthPage() {
                   <Label htmlFor="signup-password">Password</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <Input 
-                      id="signup-password" 
-                      type="password" 
-                      placeholder="••••••••" 
+                    <Input
+                      id="signup-password"
+                      type="password"
+                      placeholder="Min. 8 characters"
                       className="pl-9"
+                      value={signupData.password}
+                      onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
+                      minLength={8}
+                      required
                     />
                   </div>
                 </div>
 
                 <div className="flex items-start gap-2">
-                  <Checkbox id="terms" className="mt-1" />
+                  <Checkbox id="terms" className="mt-1" required />
                   <Label htmlFor="terms" className="text-sm cursor-pointer">
                     I agree to the <a href="#" className="text-purple-600 dark:text-purple-400 hover:underline">Terms of Service</a> and <a href="#" className="text-purple-600 dark:text-purple-400 hover:underline">Privacy Policy</a>
                   </Label>
                 </div>
 
-                <Button type="submit" className="w-full bg-gradient-to-r from-purple-600 to-blue-600">
+                <Button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600"
+                  disabled={loading}
+                >
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                   Create Account
                 </Button>
 

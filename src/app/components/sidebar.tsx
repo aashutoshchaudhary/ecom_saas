@@ -26,7 +26,7 @@ import {
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
-import { mockUser, mockWebsite } from "../lib/mock-data";
+import { useAuth } from "../lib/auth-context";
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 
 const navigationGroups = [
@@ -78,6 +78,12 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed = false, onCollapse }: SidebarProps) {
   const location = useLocation();
+  const { user, tenant } = useAuth();
+  const userName = user ? `${user.firstName} ${user.lastName}`.trim() : "User";
+  const userAvatar = user?.avatar || "";
+  const planName = tenant?.subscription || "FREE";
+  const tenantName = tenant?.name || "My Business";
+  const tenantSlug = tenant?.slug || "";
 
   return (
     <aside className={`hidden md:flex flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-all duration-300 ${collapsed ? 'w-16' : 'w-64'}`}>
@@ -113,12 +119,12 @@ export function Sidebar({ collapsed = false, onCollapse }: SidebarProps) {
         <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
           <div className="flex items-center gap-3">
             <Avatar className="w-10 h-10">
-              <AvatarImage src={mockWebsite.logo} />
-              <AvatarFallback>MB</AvatarFallback>
+              <AvatarImage src={tenant?.logo || ""} />
+              <AvatarFallback>{tenantName.charAt(0)}</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{mockWebsite.name}</p>
-              <p className="text-xs text-gray-500 truncate">{mockWebsite.url}</p>
+              <p className="text-sm font-medium truncate">{tenantName}</p>
+              <p className="text-xs text-gray-500 truncate">{tenantSlug}.siteforge.app</p>
             </div>
           </div>
         </div>
@@ -166,12 +172,12 @@ export function Sidebar({ collapsed = false, onCollapse }: SidebarProps) {
         <div className="p-4 border-t border-gray-200 dark:border-gray-800">
           <div className="flex items-center gap-3">
             <Avatar className="w-9 h-9">
-              <AvatarImage src={mockUser.avatar} />
-              <AvatarFallback>{mockUser.name.charAt(0)}</AvatarFallback>
+              <AvatarImage src={userAvatar} />
+              <AvatarFallback>{userName.charAt(0)}</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{mockUser.name}</p>
-              <p className="text-xs text-gray-500 truncate">{mockUser.plan} Plan</p>
+              <p className="text-sm font-medium truncate">{userName}</p>
+              <p className="text-xs text-gray-500 truncate capitalize">{planName.toLowerCase()} Plan</p>
             </div>
           </div>
         </div>

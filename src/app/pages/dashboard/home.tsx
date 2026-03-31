@@ -24,19 +24,36 @@ import { Badge } from "../../components/ui/badge";
 import { Input } from "../../components/ui/input";
 import { Progress } from "../../components/ui/progress";
 import { Link } from "react-router";
-import { mockOrders, mockProducts, mockAnalytics, mockWebsite, mockUser, mockWallet, statusColors } from "../../lib/mock-data";
+import { statusColors } from "../../lib/mock-data";
+import { dataProvider } from "../../lib/data-provider";
+import { useApiQuery } from "../../lib/hooks";
+import { useAuth } from "../../lib/auth-context";
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Avatar, AvatarImage, AvatarFallback } from "../../components/ui/avatar";
 import { toast } from "sonner";
 
 export function DashboardHome() {
+  const { user } = useAuth();
   const [aiMessage, setAiMessage] = useState("");
   const [showAiChat, setShowAiChat] = useState(false);
   const [aiMessages, setAiMessages] = useState([
-    { role: "assistant", content: "Hi Sarah! I noticed your conversion rate increased 18.8% this month. Would you like me to suggest ways to maintain this momentum?" },
+    { role: "assistant", content: `Hi${user ? ` ${user.firstName}` : ""}! I noticed your conversion rate increased this month. Would you like me to suggest ways to maintain this momentum?` },
   ]);
-  
-  const lowStockProducts = mockProducts.filter(p => p.stock <= p.lowStockThreshold);
+
+  const { data: orders } = useApiQuery(() => dataProvider.getOrders(), []);
+  const { data: products } = useApiQuery(() => dataProvider.getProducts(), []);
+  const { data: analytics } = useApiQuery(() => dataProvider.getAnalytics(), []);
+  const { data: website } = useApiQuery(() => dataProvider.getWebsite(), []);
+  const { data: wallet } = useApiQuery(() => dataProvider.getWallet(), []);
+
+  const mockOrders = orders || [];
+  const mockProducts = products || [];
+  const mockAnalytics = analytics || { revenue: { current: 0, change: 0, data: [] }, orders: { current: 0, change: 0, data: [] }, visitors: { current: 0, change: 0, data: [] }, conversion: { current: 0, change: 0 } };
+  const mockWebsite = website || { name: "Loading...", url: "", status: "draft", pages: 0, visitors: 0, conversionRate: 0, logo: "", lastPublished: "" };
+  const mockWallet = wallet || { balance: 0, limit: 5000 };
+  const mockUser = { name: user ? `${user.firstName} ${user.lastName}` : "User", credits: (mockWallet as any).balance || 0 };
+
+  const lowStockProducts = mockProducts.filter((p: any) => p.stock <= p.lowStockThreshold);
   const recentOrders = mockOrders.slice(0, 5);
 
   const stats = [

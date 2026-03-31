@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter, Navigate, Outlet } from "react-router";
 import { LandingPage } from "./pages/landing";
 import { AuthPage } from "./pages/auth";
 import { OnboardingPage } from "./pages/onboarding";
@@ -28,8 +28,27 @@ import { Domains } from "./pages/dashboard/domains";
 import { SEO } from "./pages/dashboard/seo";
 import { UsersManagement } from "./pages/dashboard/users";
 import { NotFound } from "./pages/not-found";
+import { ProtectedRoute } from "./components/protected-route";
+
+// Wrapper that applies ProtectedRoute to all dashboard children
+function ProtectedDashboard() {
+  return (
+    <ProtectedRoute>
+      <DashboardLayout />
+    </ProtectedRoute>
+  );
+}
+
+function ProtectedOnboarding() {
+  return (
+    <ProtectedRoute>
+      <OnboardingPage />
+    </ProtectedRoute>
+  );
+}
 
 export const router = createBrowserRouter([
+  // Public routes
   {
     path: "/",
     Component: LandingPage,
@@ -37,10 +56,6 @@ export const router = createBrowserRouter([
   {
     path: "/auth",
     Component: AuthPage,
-  },
-  {
-    path: "/onboarding",
-    Component: OnboardingPage,
   },
   {
     path: "/pricing",
@@ -58,9 +73,15 @@ export const router = createBrowserRouter([
     path: "/welcome",
     Component: WelcomePage,
   },
+
+  // Protected routes
+  {
+    path: "/onboarding",
+    Component: ProtectedOnboarding,
+  },
   {
     path: "/dashboard",
-    Component: DashboardLayout,
+    Component: ProtectedDashboard,
     children: [
       { index: true, Component: DashboardHome },
       { path: "website", Component: WebsiteBuilder },
