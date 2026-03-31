@@ -99,7 +99,7 @@ export function LandingPage() {
             <div className="hidden md:flex items-center gap-6">
               <a href="#features" className="text-sm hover:text-purple-600 transition-colors">Features</a>
               <a href="#industries" className="text-sm hover:text-purple-600 transition-colors">Industries</a>
-              <a href="#pricing" className="text-sm hover:text-purple-600 transition-colors">Pricing</a>
+              <Link to="/pricing" className="text-sm hover:text-purple-600 transition-colors">Pricing</Link>
               <a href="#testimonials" className="text-sm hover:text-purple-600 transition-colors">Testimonials</a>
               <Link to="/auth">
                 <Button variant="outline" size="sm">Login</Button>

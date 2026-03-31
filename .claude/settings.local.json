@@ -6,7 +6,11 @@
       "Bash(find /d/code1/AI/webneed/backend -name prisma.schema -o -name *.prisma)",
       "Bash(xargs ls:*)",
       "Bash(grep -E \"\\\\.\\(ts|js\\)$\")",
-      "Bash(find /d/code1/AI/webneed/backend -name README* -o -name *.md)"
+      "Bash(find /d/code1/AI/webneed/backend -name README* -o -name *.md)",
+      "Bash(npx tsc:*)",
+      "Bash(pnpm exec:*)",
+      "Bash(pnpm build:*)",
+      "Bash(timeout 8 pnpm dev)"
     ]
   }
 }

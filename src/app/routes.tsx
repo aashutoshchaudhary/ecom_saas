@@ -2,6 +2,10 @@ import { createBrowserRouter } from "react-router";
 import { LandingPage } from "./pages/landing";
 import { AuthPage } from "./pages/auth";
 import { OnboardingPage } from "./pages/onboarding";
+import { PricingPage } from "./pages/pricing";
+import { CheckoutPage } from "./pages/checkout";
+import { ProvisioningPage } from "./pages/provisioning";
+import { WelcomePage } from "./pages/welcome";
 import { DashboardLayout } from "./layouts/dashboard-layout";
 import { DashboardHome } from "./pages/dashboard/home";
 import { WebsiteBuilder } from "./pages/dashboard/website-builder";
@@ -37,6 +41,22 @@ export const router = createBrowserRouter([
   {
     path: "/onboarding",
     Component: OnboardingPage,
+  },
+  {
+    path: "/pricing",
+    Component: PricingPage,
+  },
+  {
+    path: "/checkout",
+    Component: CheckoutPage,
+  },
+  {
+    path: "/provisioning",
+    Component: ProvisioningPage,
+  },
+  {
+    path: "/welcome",
+    Component: WelcomePage,
   },
   {
     path: "/dashboard",
