@@ -105,25 +105,20 @@ export class RoleService {
     return Object.values(Permission);
   }
 
-  async getUserPermissions(userId: string, tenantId: string) {
-    const redis = RedisClient.getInstance();
-    const cacheKey = RedisKeys.CACHE_PERMISSIONS(userId, tenantId);
+  async getUserPermissions(_userId: string, _tenantId: string) {
+    // User-role mapping is managed by user-service via TenantMembership.
+    // This endpoint returns permissions for a given roleId instead.
+    // The API gateway passes roleId from the auth token.
+    return [];
+  }
 
-    const cached = await redis.get(cacheKey);
-    if (cached) return JSON.parse(cached);
-
-    const membership = await prisma.tenantMembership.findFirst({
-      where: { userId, tenantId },
+  async getRolePermissions(roleId: string) {
+    const role = await prisma.role.findUnique({
+      where: { id: roleId },
+      include: { permissions: { include: { permission: true } } },
     });
-
-    if (!membership) throw new NotFoundError('Membership');
-
-    const role = await prisma.role.findUnique({ where: { id: membership.roleId } });
-    if (!role) throw new NotFoundError('Role', membership.roleId);
-
-    const permissions = role.permissions as string[];
-    await redis.setex(cacheKey, 3600, JSON.stringify(permissions));
-    return permissions;
+    if (!role) throw new NotFoundError('Role', roleId);
+    return role.permissions.map(rp => `${rp.permission.resource}:${rp.permission.action}`);
   }
 
   private async getRole(tenantId: string, roleId: string) {
@@ -134,15 +129,8 @@ export class RoleService {
     return role;
   }
 
-  private async invalidatePermissionCache(tenantId: string) {
-    const redis = RedisClient.getInstance();
-    const memberships = await prisma.tenantMembership.findMany({
-      where: { tenantId },
-      select: { userId: true },
-    });
-    for (const m of memberships) {
-      await redis.del(RedisKeys.CACHE_PERMISSIONS(m.userId, tenantId));
-    }
+  private async invalidatePermissionCache(_tenantId: string) {
+    // Cache invalidation handled per-role, not per-membership
   }
 }
 

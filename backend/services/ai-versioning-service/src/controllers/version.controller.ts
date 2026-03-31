@@ -2,30 +2,30 @@ import { Request, Response, NextFunction } from 'express';
 import { versionService } from '../services/version.service';
 
 export class VersionController {
-  async listVersions(req: Request, res: Response, next: NextFunction) {
+  async list(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await versionService.listVersions(req.headers['x-tenant-id'] as string, req.params.websiteId);
+      const result = await versionService.list(req.headers['x-tenant-id'] as string, { websiteId: req.params.websiteId, ...req.query as any });
+      res.json({ success: true, ...result });
+    } catch (error) { next(error); }
+  }
+
+  async get(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await versionService.get(req.headers['x-tenant-id'] as string, req.params.id);
       res.json({ success: true, data: result });
     } catch (error) { next(error); }
   }
 
-  async getVersion(req: Request, res: Response, next: NextFunction) {
+  async restore(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await versionService.getVersion(req.headers['x-tenant-id'] as string, req.params.id);
+      const result = await versionService.restore(req.headers['x-tenant-id'] as string, req.params.id);
       res.json({ success: true, data: result });
     } catch (error) { next(error); }
   }
 
-  async restoreVersion(req: Request, res: Response, next: NextFunction) {
+  async compare(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await versionService.restoreVersion(req.headers['x-tenant-id'] as string, req.params.id, req.headers['x-user-id'] as string);
-      res.json({ success: true, data: result });
-    } catch (error) { next(error); }
-  }
-
-  async compareVersions(req: Request, res: Response, next: NextFunction) {
-    try {
-      const result = await versionService.compareVersions(req.headers['x-tenant-id'] as string, req.body.versionAId, req.body.versionBId);
+      const result = await versionService.compare(req.headers['x-tenant-id'] as string, req.body.versionAId, req.body.versionBId);
       res.json({ success: true, data: result });
     } catch (error) { next(error); }
   }

@@ -26,13 +26,12 @@ export class RefundService {
     });
 
     try {
-      await EventProducer.publish('REFUND_EVENTS', {
-        type: 'REFUND_REQUESTED',
+      await EventProducer.publish('REFUND_EVENTS', 'REFUND_REQUESTED', {
         tenantId,
         refundId: refund.id,
         orderId: data.orderId,
         amount: data.amount,
-      });
+      }, tenantId);
     } catch {}
 
     return refund;
@@ -106,13 +105,12 @@ export class RefundService {
         });
 
         try {
-          await EventProducer.publish('REFUND_EVENTS', {
-            type: 'REFUND_COMPLETED',
+          await EventProducer.publish('REFUND_EVENTS', 'REFUND_COMPLETED', {
             tenantId,
             refundId: id,
             orderId: refund.orderId,
             amount: Number(refund.amount),
-          });
+          }, tenantId);
         } catch {}
 
         return prisma.refund.findFirst({ where: { id } });

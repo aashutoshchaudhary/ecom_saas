@@ -11,8 +11,8 @@ const CACHE_TTL = 3600;
 export class TemplateService {
   async list(query: { page?: string; limit?: string; industry?: string; category?: string }) {
     const { page, limit, skip } = parsePagination(query);
-    const where: any = { isActive: true };
-    if (query.industry) where.industryId = query.industry;
+    const where: any = { isPublic: true };
+    if (query.industry) where.industry = query.industry;
     if (query.category) where.category = query.category;
 
     const [templates, total] = await Promise.all([
@@ -37,54 +37,39 @@ export class TemplateService {
   }
 
   async create(data: {
-    name: string; description?: string; industryId?: string;
+    name: string; description?: string; industry?: string;
     category?: string; thumbnail?: string;
     structure: Record<string, unknown>; pages?: any[];
   }) {
     return prisma.template.create({
       data: {
-        id: generateId(),
         name: data.name,
         description: data.description,
-        industryId: data.industryId,
+        industry: data.industry,
         category: data.category,
         thumbnail: data.thumbnail,
         structure: data.structure as any,
         pages: data.pages || [],
-        isActive: true,
       },
     });
   }
 
-  async apply(tenantId: string, templateId: string, websiteId: string) {
+  async apply(_tenantId: string, templateId: string, _websiteId: string) {
     const template = await this.get(templateId);
 
-    const website = await prisma.website.update({
-      where: { id: websiteId },
-      data: {
-        templateId,
-        structure: template.structure,
-        updatedAt: new Date(),
-      },
+    // Increment usage count
+    await prisma.template.update({
+      where: { id: templateId },
+      data: { usageCount: { increment: 1 } },
     });
 
-    // Create pages from template
-    const templatePages = (template.pages || []) as any[];
-    for (const page of templatePages) {
-      await prisma.page.create({
-        data: {
-          id: generateId(),
-          websiteId,
-          name: page.name,
-          slug: page.slug,
-          sections: page.sections || [],
-          isHomepage: page.isHomepage || false,
-          sortOrder: page.sortOrder || 0,
-        },
-      });
-    }
-
-    return website;
+    // Return template data for the website-builder-service to apply
+    return {
+      templateId,
+      structure: template.structure,
+      pages: template.pages,
+      theme: template.theme,
+    };
   }
 
   async clone(templateId: string, newName: string) {
@@ -92,22 +77,22 @@ export class TemplateService {
 
     return prisma.template.create({
       data: {
-        id: generateId(),
         name: newName,
         description: template.description,
-        industryId: template.industryId,
+        industry: template.industry,
         category: template.category,
         thumbnail: template.thumbnail,
         structure: template.structure,
         pages: template.pages,
-        isActive: true,
+        theme: template.theme,
+        components: template.components,
       },
     });
   }
 
-  async getByIndustry(industryId: string) {
+  async getByIndustry(industry: string) {
     return prisma.template.findMany({
-      where: { industryId, isActive: true },
+      where: { industry, isPublic: true },
       orderBy: { name: 'asc' },
     });
   }

@@ -20,7 +20,7 @@ app.get('/health', (_req, res) => {
 });
 
 // Routes
-app.use('/api/v1/ais', router);
+app.use('/api/v1/ai', router);
 
 // Error handling
 app.use(errorHandler);

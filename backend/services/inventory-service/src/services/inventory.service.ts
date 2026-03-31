@@ -144,14 +144,13 @@ export class InventoryService {
 
       if (updated.quantity <= updated.lowStockThreshold) {
         try {
-          await EventProducer.publish('INVENTORY_EVENTS', {
-            type: 'LOW_STOCK_ALERT',
+          await EventProducer.publish('INVENTORY_EVENTS', 'LOW_STOCK_ALERT', {
             tenantId,
             inventoryId: id,
             sku: item.sku,
             quantity: updated.quantity,
             threshold: updated.lowStockThreshold,
-          });
+          }, tenantId);
         } catch {}
       }
 

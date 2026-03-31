@@ -43,7 +43,7 @@ export class PosService {
         accessToken: data.accessToken,
         refreshToken: data.refreshToken,
         locationId: data.locationId,
-        settings: data.settings || {},
+        settings: (data.settings || {}) as any,
         status: 'ACTIVE',
       },
     });

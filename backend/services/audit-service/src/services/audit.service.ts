@@ -34,7 +34,7 @@ export class AuditService {
         after: data.after as any,
         ipAddress: data.ipAddress,
         userAgent: data.userAgent,
-        metadata: data.metadata || {},
+        metadata: (data.metadata || {}) as any,
       },
     });
   }

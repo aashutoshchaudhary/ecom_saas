@@ -73,7 +73,7 @@ export class OrderService {
       include: { items: true, timeline: { orderBy: { createdAt: 'desc' } } },
     });
 
-    try { await EventProducer.publish('ORDER_EVENTS', { type: 'ORDER_CREATED', tenantId, orderId: order.id, total: totalAmount }); } catch {}
+    try { await EventProducer.publish('ORDER_EVENTS', 'ORDER_CREATED', { tenantId, orderId: order.id, total: totalAmount }, tenantId); } catch {}
     return order;
   }
 
@@ -153,7 +153,7 @@ export class OrderService {
       }) : Promise.resolve(null),
     ]);
 
-    try { await EventProducer.publish('ORDER_EVENTS', { type: 'ORDER_UPDATED', tenantId, orderId: id, status: data.status }); } catch {}
+    try { await EventProducer.publish('ORDER_EVENTS', 'ORDER_UPDATED', { tenantId, orderId: id, status: data.status }, tenantId); } catch {}
     return updated;
   }
 

@@ -121,12 +121,11 @@ export class WalletService {
     ]);
 
     try {
-      await EventProducer.publish('WALLET_EVENTS', {
-        type: isCredit ? 'CREDITS_ADDED' : 'CREDITS_DEDUCTED',
+      await EventProducer.publish('WALLET_EVENTS', isCredit ? 'CREDITS_ADDED' : 'CREDITS_DEDUCTED', {
         tenantId,
         amount: data.amount,
         balance: newBalance,
-      });
+      }, tenantId);
     } catch {}
 
     return { wallet: updatedWallet, transaction };

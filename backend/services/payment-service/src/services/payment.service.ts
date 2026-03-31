@@ -26,7 +26,7 @@ export class PaymentService {
         method: data.method,
         cardLast4: data.cardLast4,
         idempotencyKey,
-        metadata: data.metadata || {},
+        metadata: (data.metadata || {}) as any,
         status: 'PENDING',
       },
     });
@@ -50,13 +50,12 @@ export class PaymentService {
       });
 
       try {
-        await EventProducer.publish('PAYMENT_EVENTS', {
-          type: 'PAYMENT_PROCESSED',
+        await EventProducer.publish('PAYMENT_EVENTS', 'PAYMENT_PROCESSED', {
           tenantId,
           paymentId: updated.id,
           orderId: data.orderId,
           status: updated.status,
-        });
+        }, tenantId);
       } catch {}
 
       return updated;
@@ -147,13 +146,11 @@ export class PaymentService {
 
   async update(tenantId: string, id: string, data: { status?: PaymentStatus; metadata?: Record<string, unknown> }) {
     await this.get(tenantId, id);
-    return prisma.payment.update({
-      where: { id },
-      data: {
-        ...data,
-        paidAt: data.status === 'SUCCEEDED' ? new Date() : undefined,
-      },
-    });
+    const updateData: any = {};
+    if (data.status) { updateData.status = data.status; }
+    if (data.metadata) { updateData.metadata = data.metadata; }
+    if (data.status === 'SUCCEEDED') { updateData.paidAt = new Date(); }
+    return prisma.payment.update({ where: { id }, data: updateData });
   }
 
   async delete(tenantId: string, id: string) {
@@ -166,7 +163,7 @@ export class PaymentService {
 
   async handleWebhook(provider: PaymentProvider, eventType: string, payload: Record<string, unknown>) {
     await prisma.paymentWebhookLog.create({
-      data: { provider, eventType, payload },
+      data: { provider, eventType, payload: payload as any },
     });
 
     if (provider === 'STRIPE') {

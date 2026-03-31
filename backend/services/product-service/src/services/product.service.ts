@@ -43,7 +43,7 @@ export class ProductService {
         category: data.category,
         tags: data.tags || [],
         images: data.images || [],
-        metadata: data.metadata || {},
+        metadata: (data.metadata || {}) as any,
         variants: data.variants ? {
           create: data.variants.map((v, i) => ({
             name: v.name,
@@ -59,7 +59,7 @@ export class ProductService {
       include: { variants: true },
     });
 
-    try { await EventProducer.publish('PRODUCT_EVENTS', { type: 'PRODUCT_CREATED', tenantId, productId: product.id }); } catch {}
+    try { await EventProducer.publish('PRODUCT_EVENTS', 'PRODUCT_CREATED', { tenantId, productId: product.id }, tenantId); } catch {}
     return product;
   }
 
@@ -132,7 +132,7 @@ export class ProductService {
   async delete(tenantId: string, id: string) {
     await this.get(tenantId, id);
     await prisma.product.update({ where: { id }, data: { status: 'ARCHIVED' } });
-    try { await EventProducer.publish('PRODUCT_EVENTS', { type: 'PRODUCT_DELETED', tenantId, productId: id }); } catch {}
+    try { await EventProducer.publish('PRODUCT_EVENTS', 'PRODUCT_DELETED', { tenantId, productId: id }, tenantId); } catch {}
   }
 
   async addVariant(tenantId: string, productId: string, data: {

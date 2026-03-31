@@ -8,12 +8,11 @@ const prisma = new PrismaClient();
 
 export class VersionService {
   async list(tenantId: string, query: {
-    page?: string; limit?: string; resourceType?: string; resourceId?: string;
+    page?: string; limit?: string; websiteId?: string;
   }) {
     const { page, limit, skip } = parsePagination(query);
     const where: any = { tenantId };
-    if (query.resourceType) where.resourceType = query.resourceType;
-    if (query.resourceId) where.resourceId = query.resourceId;
+    if (query.websiteId) where.websiteId = query.websiteId;
 
     const [versions, total] = await Promise.all([
       prisma.aiVersion.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' } }),
@@ -32,12 +31,13 @@ export class VersionService {
   }
 
   async createVersion(tenantId: string, data: {
-    resourceType: string; resourceId: string;
-    content: Record<string, unknown>; metadata?: Record<string, unknown>;
-    createdBy?: string;
+    websiteId: string; jobId: string;
+    snapshot: Record<string, unknown>;
+    metadata?: Record<string, unknown>;
+    createdBy: string;
   }) {
     const lastVersion = await prisma.aiVersion.findFirst({
-      where: { tenantId, resourceType: data.resourceType, resourceId: data.resourceId },
+      where: { tenantId, websiteId: data.websiteId },
       orderBy: { versionNumber: 'desc' },
     });
 
@@ -45,11 +45,11 @@ export class VersionService {
       data: {
         id: generateId(),
         tenantId,
-        resourceType: data.resourceType,
-        resourceId: data.resourceId,
+        websiteId: data.websiteId,
+        jobId: data.jobId,
         versionNumber: (lastVersion?.versionNumber || 0) + 1,
-        content: data.content as any,
-        metadata: data.metadata || {},
+        snapshot: data.snapshot as any,
+        metadata: data.metadata ? JSON.parse(JSON.stringify(data.metadata)) : {},
         createdBy: data.createdBy,
       },
     });
@@ -58,26 +58,13 @@ export class VersionService {
   async restore(tenantId: string, versionId: string) {
     const version = await this.get(tenantId, versionId);
 
-    // Create a new version with the restored content
     const restored = await this.createVersion(tenantId, {
-      resourceType: version.resourceType,
-      resourceId: version.resourceId,
-      content: version.content as Record<string, unknown>,
+      websiteId: version.websiteId,
+      jobId: version.jobId,
+      snapshot: version.snapshot as Record<string, unknown>,
       metadata: { restoredFrom: versionId, restoredAt: new Date().toISOString() },
+      createdBy: 'system',
     });
-
-    // Update the actual resource based on type
-    if (version.resourceType === 'PAGE') {
-      await prisma.page.update({
-        where: { id: version.resourceId },
-        data: { sections: version.content as any, updatedAt: new Date() },
-      });
-    } else if (version.resourceType === 'WEBSITE') {
-      await prisma.website.update({
-        where: { id: version.resourceId },
-        data: { structure: version.content as any, updatedAt: new Date() },
-      });
-    }
 
     return restored;
   }
@@ -88,10 +75,10 @@ export class VersionService {
       this.get(tenantId, versionIdB),
     ]);
 
-    const contentA = versionA.content as Record<string, unknown>;
-    const contentB = versionB.content as Record<string, unknown>;
+    const snapshotA = versionA.snapshot as Record<string, unknown>;
+    const snapshotB = versionB.snapshot as Record<string, unknown>;
 
-    const diff = this.computeDiff(contentA, contentB);
+    const diff = this.computeDiff(snapshotA, snapshotB);
 
     return {
       versionA: { id: versionA.id, versionNumber: versionA.versionNumber, createdAt: versionA.createdAt },
@@ -106,7 +93,6 @@ export class VersionService {
     path = ''
   ): Array<{ path: string; type: 'added' | 'removed' | 'changed'; oldValue?: unknown; newValue?: unknown }> {
     const changes: Array<{ path: string; type: 'added' | 'removed' | 'changed'; oldValue?: unknown; newValue?: unknown }> = [];
-
     const allKeys = new Set([...Object.keys(objA), ...Object.keys(objB)]);
 
     for (const key of allKeys) {

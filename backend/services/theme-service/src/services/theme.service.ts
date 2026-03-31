@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import {
-  generateId, NotFoundError, ConflictError,
+  generateId, NotFoundError,
   RedisClient, RedisKeys,
 } from '@siteforge/shared';
 
@@ -30,8 +30,14 @@ export class ThemeService {
   }
 
   async create(tenantId: string, data: {
-    name: string; colors: Record<string, string>;
-    fonts: Record<string, string>; variables?: Record<string, unknown>;
+    name: string;
+    colors: Record<string, string>;
+    typography?: Record<string, unknown>;
+    header?: Record<string, unknown>;
+    footer?: Record<string, unknown>;
+    spacing?: Record<string, unknown>;
+    borders?: Record<string, unknown>;
+    shadows?: Record<string, unknown>;
   }) {
     return prisma.theme.create({
       data: {
@@ -39,16 +45,26 @@ export class ThemeService {
         tenantId,
         name: data.name,
         colors: data.colors as any,
-        fonts: data.fonts as any,
-        variables: data.variables || {},
+        typography: (data.typography || {}) as any,
+        header: (data.header || {}) as any,
+        footer: (data.footer || {}) as any,
+        spacing: (data.spacing || {}) as any,
+        borders: (data.borders || {}) as any,
+        shadows: (data.shadows || {}) as any,
         isSystem: false,
       },
     });
   }
 
   async update(tenantId: string, themeId: string, data: {
-    name?: string; colors?: Record<string, string>;
-    fonts?: Record<string, string>; variables?: Record<string, unknown>;
+    name?: string;
+    colors?: Record<string, string>;
+    typography?: Record<string, unknown>;
+    header?: Record<string, unknown>;
+    footer?: Record<string, unknown>;
+    spacing?: Record<string, unknown>;
+    borders?: Record<string, unknown>;
+    shadows?: Record<string, unknown>;
   }) {
     const theme = await prisma.theme.findUnique({ where: { id: themeId } });
     if (!theme || (theme.tenantId !== tenantId && !theme.isSystem)) {
@@ -58,26 +74,23 @@ export class ThemeService {
     const redis = RedisClient.getInstance();
     await redis.del(RedisKeys.CACHE_THEME(themeId));
 
-    return prisma.theme.update({
-      where: { id: themeId },
-      data: {
-        name: data.name,
-        colors: data.colors as any,
-        fonts: data.fonts as any,
-        variables: data.variables as any,
-        updatedAt: new Date(),
-      },
-    });
+    const updateData: any = {};
+    if (data.name) updateData.name = data.name;
+    if (data.colors) updateData.colors = data.colors;
+    if (data.typography) updateData.typography = data.typography;
+    if (data.header) updateData.header = data.header;
+    if (data.footer) updateData.footer = data.footer;
+    if (data.spacing) updateData.spacing = data.spacing;
+    if (data.borders) updateData.borders = data.borders;
+    if (data.shadows) updateData.shadows = data.shadows;
+
+    return prisma.theme.update({ where: { id: themeId }, data: updateData });
   }
 
-  async apply(tenantId: string, themeId: string, websiteId: string) {
+  async apply(_tenantId: string, themeId: string, _websiteId: string) {
     const theme = await prisma.theme.findUnique({ where: { id: themeId } });
     if (!theme) throw new NotFoundError('Theme', themeId);
-
-    return prisma.website.update({
-      where: { id: websiteId },
-      data: { themeId, updatedAt: new Date() },
-    });
+    return { themeId, theme };
   }
 }
 

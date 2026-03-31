@@ -37,11 +37,11 @@ export class IndustryService {
     const cached = await redis.get(cacheKey);
     if (cached) return JSON.parse(cached);
 
-    await this.getById(industryId); // Verify industry exists
+    await this.getById(industryId);
 
-    const templates = await prisma.template.findMany({
+    const templates = await prisma.industryTemplate.findMany({
       where: { industryId },
-      orderBy: { name: 'asc' },
+      orderBy: { createdAt: 'asc' },
     });
 
     await redis.setex(cacheKey, CACHE_TTL, JSON.stringify(templates));
@@ -49,20 +49,8 @@ export class IndustryService {
   }
 
   async getPlugins(industryId: string) {
-    const redis = RedisClient.getInstance();
-    const cacheKey = `sf:cache:industry:${industryId}:plugins`;
-    const cached = await redis.get(cacheKey);
-    if (cached) return JSON.parse(cached);
-
-    await this.getById(industryId);
-
-    const plugins = await prisma.plugin.findMany({
-      where: { industry: industryId, isActive: true },
-      orderBy: { name: 'asc' },
-    });
-
-    await redis.setex(cacheKey, CACHE_TTL, JSON.stringify(plugins));
-    return plugins;
+    const industry = await this.getById(industryId);
+    return { industryId, requiredPlugins: industry.requiredPlugins || [] };
   }
 }
 
